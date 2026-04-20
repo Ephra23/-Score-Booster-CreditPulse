@@ -1,0 +1,2441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CreditPulse – Credit Health Dashboard</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'DM Sans','Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);transition:all .3s cubic-bezier(.4,0,.2,1);-webkit-font-smoothing:antialiased}
+    :root{--bg:#f8fafc;--surface:#ffffff;--surface-elevated:#ffffff;--border:rgba(148,163,184,.2);--text:#0f172a;--muted:#64748b;--dark:#0f172a;--glass:rgba(255,255,255,.7);--glass-border:rgba(255,255,255,.3);--shadow-sm:0 1px 2px rgba(0,0,0,.04);--shadow:0 4px 20px rgba(0,0,0,.06);--shadow-lg:0 12px 40px rgba(0,0,0,.1);--shadow-glow:0 0 60px rgba(244,129,32,.15);--gradient-primary:linear-gradient(135deg,#F48120 0%,#FAAE40 50%,#F48120 100%);--gradient-dark:linear-gradient(135deg,#1e293b 0%,#334155 100%);--gradient-mesh:radial-gradient(at 40% 20%,rgba(244,129,32,.08) 0px,transparent 50%),radial-gradient(at 80% 0%,rgba(139,92,246,.06) 0px,transparent 50%),radial-gradient(at 0% 50%,rgba(59,130,246,.05) 0px,transparent 50%)}
+    body.dark{--bg:#030712;--surface:rgba(30,41,59,.6);--surface-elevated:rgba(30,41,59,.8);--border:rgba(71,85,105,.3);--text:#f1f5f9;--muted:#94a3b8;--dark:#f8fafc;--glass:rgba(15,23,42,.6);--glass-border:rgba(71,85,105,.3);--shadow-sm:0 1px 2px rgba(0,0,0,.2);--shadow:0 4px 20px rgba(0,0,0,.3);--shadow-lg:0 12px 40px rgba(0,0,0,.4);--shadow-glow:0 0 80px rgba(244,129,32,.2);--gradient-mesh:radial-gradient(at 40% 20%,rgba(244,129,32,.12) 0px,transparent 50%),radial-gradient(at 80% 0%,rgba(139,92,246,.1) 0px,transparent 50%),radial-gradient(at 0% 50%,rgba(59,130,246,.08) 0px,transparent 50%)}
+    body::before{content:'';position:fixed;inset:0;background:var(--gradient-mesh);pointer-events:none;z-index:-1}
+    ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#F48120,#FAAE40);border-radius:10px}::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#FAAE40,#F48120)}
+    ::selection{background:rgba(244,129,32,.2);color:inherit}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}.fade-in{animation:fadeIn .4s cubic-bezier(.4,0,.2,1)}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.7;transform:scale(1.05)}}.live-dot{animation:pulse 2s ease-in-out infinite}
+    @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}.shimmer{background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);background-size:200% 100%;animation:shimmer 2s infinite}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}.float{animation:float 4s ease-in-out infinite}
+    @keyframes glow{0%,100%{box-shadow:0 0 20px rgba(244,129,32,.3)}50%{box-shadow:0 0 40px rgba(244,129,32,.5)}}.glow{animation:glow 3s ease-in-out infinite}
+    @keyframes gradient{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}.gradient-animate{background-size:200% 200%;animation:gradient 4s ease infinite}
+    @keyframes borderGlow{0%,100%{border-color:rgba(244,129,32,.3)}50%{border-color:rgba(244,129,32,.6)}}
+    input:focus,select:focus,textarea:focus{border-color:rgba(244,129,32,.5)!important;box-shadow:0 0 0 4px rgba(244,129,32,.1),0 0 20px rgba(244,129,32,.1)!important;outline:none}
+    @media(max-width:900px){.sidebar-desktop{display:none!important}.main-content{margin-left:0!important;padding:16px!important;padding-bottom:100px!important}.bottom-nav{display:flex!important}.grid-responsive{grid-template-columns:1fr!important}}
+    .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--glass);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-top:1px solid var(--glass-border);z-index:200;padding:8px 0 max(8px,env(safe-area-inset-bottom))}
+    .card-hover{transition:all .3s cubic-bezier(.4,0,.2,1)}.card-hover:hover{transform:translateY(-4px) scale(1.01);box-shadow:var(--shadow-lg),var(--shadow-glow)!important}
+    .btn-primary{background:var(--gradient-primary);background-size:200% 200%;color:#fff;border:none;border-radius:14px;padding:14px 24px;font-size:14px;font-weight:600;cursor:pointer;transition:all .3s cubic-bezier(.4,0,.2,1);position:relative;overflow:hidden}
+    .btn-primary::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);transform:translateX(-100%);transition:transform .5s}.btn-primary:hover::before{transform:translateX(100%)}
+    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(244,129,32,.4);background-position:100% 50%}
+    .btn-primary:active{transform:translateY(0) scale(.98)}
+    .btn-ghost{background:var(--glass);backdrop-filter:blur(10px);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:12px 18px;font-size:13px;font-weight:500;cursor:pointer;transition:all .25s cubic-bezier(.4,0,.2,1)}
+    .btn-ghost:hover{background:rgba(244,129,32,.08);border-color:rgba(244,129,32,.3);color:#F48120;transform:translateY(-1px)}
+    .tag{display:inline-flex;align-items:center;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;backdrop-filter:blur(8px);border:1px solid transparent}
+    .progress-track{height:8px;background:var(--border);border-radius:10px;overflow:hidden;position:relative}
+    .progress-bar{height:100%;border-radius:10px;transition:width .6s cubic-bezier(.4,0,.2,1);position:relative}.progress-bar::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:shimmer 2s infinite}
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px}
+    .modal-box{background:var(--surface-elevated);backdrop-filter:blur(40px);border-radius:24px;padding:32px;width:100%;max-width:580px;max-height:90vh;overflow-y:auto;border:1px solid var(--glass-border);box-shadow:var(--shadow-lg)}
+    .inp{width:100%;padding:14px 16px;background:var(--glass);backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:12px;font-size:14px;color:var(--text);font-family:inherit;transition:all .25s}
+    .inp:hover{border-color:rgba(244,129,32,.3)}
+    .card-stat{background:var(--glass);backdrop-filter:blur(10px);border-radius:16px;padding:16px;text-align:center;border:1px solid var(--border);transition:all .3s}
+    .card-stat:hover{border-color:rgba(244,129,32,.3);box-shadow:var(--shadow)}
+    .section-card{background:var(--surface);backdrop-filter:blur(20px);border-radius:20px;padding:24px;border:1px solid var(--border);margin-bottom:20px;box-shadow:var(--shadow-sm);transition:all .3s cubic-bezier(.4,0,.2,1)}
+    .section-card:hover{box-shadow:var(--shadow)}
+    .glass-card{background:var(--glass);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border:1px solid var(--glass-border);border-radius:20px}
+    .premium-border{position:relative}.premium-border::before{content:'';position:absolute;inset:-1px;background:linear-gradient(135deg,#F48120,#FAAE40,#8b5cf6,#3b82f6,#F48120);border-radius:inherit;z-index:-1;opacity:.5;filter:blur(1px)}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+    .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+    .text-gradient{background:var(--gradient-primary);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .icon-box{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;position:relative;overflow:hidden}.icon-box::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.2),transparent)}
+    .stat-number{font-family:'JetBrains Mono','SF Mono',Monaco,monospace;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+    .divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:20px 0}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useMemo,useEffect,useRef,useCallback}=React;
+
+// ============================================================
+//  THEME & COLOR TOKENS
+// ============================================================
+const C={
+  primary:'#F48120',primaryLight:'rgba(244,129,32,.12)',
+  dark:'var(--dark)',text:'var(--text)',muted:'var(--muted)',
+  surface:'var(--surface)',border:'var(--border)',bg:'var(--bg)',
+  success:'#10b981',successLight:'rgba(16,185,129,.1)',
+  warning:'#f59e0b',warningLight:'rgba(245,158,11,.1)',
+  danger:'#ef4444',dangerLight:'rgba(239,68,68,.1)',
+  info:'#3b82f6',infoLight:'rgba(59,130,246,.1)',
+  purple:'#8b5cf6',purpleLight:'rgba(139,92,246,.1)',
+};
+
+// ============================================================
+//  CARD NETWORK LOGOS
+// ============================================================
+const VisaLogo=({c='#fff',w=50})=><svg width={w} height={w*.32} viewBox="0 0 750 471"><path fill={c} d="M278 334l33-194h53l-33 194h-53zm247-189c-10-4-27-8-48-8-52 0-89 26-90 64 0 28 26 43 47 53 21 9 28 15 27 24 0 13-16 19-32 19-21 0-32-3-50-10l-7-3-7 43c12 5 35 10 59 10 56 0 92-26 92-66 0-22-14-39-45-53-18-9-30-15-30-24 0-8 10-17 30-17 18 0 30 4 40 7l5 2 7-41zm137 0h-41c-13 0-22 4-28 16l-79 178h56l11-29h68l6 29h49l-42-194zm-65 125l21-55 7-18 4 17 12 56h-44zm-263-125l-52 132-6-27c-9-31-39-64-73-81l48 170h56l83-194h-56z"/><path fill="#F7B600" d="M147 140H61l-1 4c67 16 111 55 129 102l-19-89c-3-13-12-16-23-17z"/></svg>;
+const McardLogo=({w=40})=><svg width={w} height={w*.77} viewBox="0 0 131 87"><circle fill="#EB001B" cx="43" cy="43" r="43"/><circle fill="#F79E1B" cx="88" cy="43" r="43"/><path fill="#FF5F00" d="M66 16c-9 7-15 18-15 30s6 23 15 30c9-7 15-18 15-30s-6-23-15-30z"/></svg>;
+const AmexLogo=({c='#fff',w=55})=><svg width={w} height={w*.18} viewBox="0 0 100 18"><text x="0" y="14" fill={c} fontSize="12" fontWeight="bold" fontFamily="Arial">AMERICAN EXPRESS</text></svg>;
+const DiscoverLogo=({w=65})=><svg width={w} height={w*.28} viewBox="0 0 200 55"><text x="0" y="38" fill="#fff" fontSize="28" fontWeight="bold" fontFamily="Arial">DISCOVER</text><circle cx="172" cy="27" r="20" fill="#F47216"/></svg>;
+const ChaseLogo=({c='#fff',w=24})=><svg width={w} height={w} viewBox="0 0 64 64"><path fill={c} d="M0 18h18V0h28v18h18v28H46v18H18V46H0V18zm20 2v24h24V20H20z"/></svg>;
+const CapOneLogo=({c='#fff',w=70})=><svg width={w} height={w*.2} viewBox="0 0 180 36"><text x="0" y="26" fill={c} fontSize="20" fontWeight="bold" fontFamily="Arial">Capital One</text><path fill="#D03027" d="M165 4l8 14-8 14-8-14z"/></svg>;
+const CitiLogo=({c='#fff',w=40})=><svg width={w} height={w*.55} viewBox="0 0 80 44"><text x="0" y="32" fill={c} fontSize="32" fontWeight="bold" fontFamily="Arial">citi</text><path fill="#E11A2C" d="M62 4q6-4 11 0v6q-5-4-11 0z"/></svg>;
+const AppleLogo=({c='#000',w=16})=><svg width={w} height={w*1.2} viewBox="0 0 170 207"><path fill={c} d="M150 172c-3 7-6 12-10 18-5 8-10 13-13 16-5 5-11 7-17 7-4 0-9-1-15-4-6-2-12-4-17-4s-11 2-17 4c-6 2-11 4-15 4-6 0-11-2-17-8-4-3-8-8-14-16-6-8-11-18-15-29-4-12-6-23-6-34 0-12 3-23 8-32 4-7 10-13 17-17 7-4 15-6 23-6 5 0 10 1 18 4 7 3 12 4 14 4 2 0 7-2 16-5s16-4 22-4c16 1 28 8 36 19-14 9-21 21-21 36 0 12 5 22 13 30 4 4 8 6 13 8-1 3-2 6-3 9zM116 7c0 10-4 18-10 27-9 10-19 15-30 14 0-1 0-2 0-4 0-9 4-19 11-27 4-4 8-7 13-10 6-3 11-4 16-4 0 1 0 3 0 4z"/></svg>;
+const WFLogo=({c='#fff',w=80})=><svg width={w} height={w*.22} viewBox="0 0 180 40"><text x="0" y="30" fill={c} fontSize="22" fontWeight="bold" fontFamily="serif">WELLS FARGO</text></svg>;
+const BofALogo=({c='#fff',w=85})=><svg width={w} height={w*.17} viewBox="0 0 200 34"><text x="0" y="26" fill={c} fontSize="18" fontWeight="bold" fontFamily="Arial">BANK OF AMERICA</text></svg>;
+const Chip=({t='gold',s=40})=>{const g=t==='gold'?'#d4af37':t==='silver'?'#a0aec0':'#e2e8f0';return<div style={{width:s,height:s*.75,borderRadius:4,background:`linear-gradient(145deg,${g},#f4e4a6,${g})`,boxShadow:'0 1px 2px rgba(0,0,0,.2)'}}/>};
+const Contactless=({c='#fff',s=18})=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M6 12c2-2 5-3 7-3s5 1 7 3M9 15c1-1 3-2 5-2s3 1 5 2M11 18c1-1 2-1 3-1s2 0 3 1"/></svg>;
+
+// ============================================================
+//  CARD DEFINITIONS
+// ============================================================
+const CARDS={
+  chase_sapphire_preferred:{name:'Chase Sapphire Preferred',issuer:'chase',network:'visa',grad:'linear-gradient(135deg,#1a365d,#2c5282)',tc:'#fff',chip:'gold'},
+  chase_sapphire_reserve:{name:'Chase Sapphire Reserve',issuer:'chase',network:'visa',grad:'linear-gradient(145deg,#0a0a0f,#1a1a2e)',tc:'#a0aec0',chip:'silver'},
+  chase_freedom:{name:'Chase Freedom Flex',issuer:'chase',network:'visa',grad:'linear-gradient(135deg,#1a365d,#3182ce)',tc:'#fff',chip:'gold'},
+  amex_gold:{name:'Amex Gold Card',issuer:'amex',network:'amex',grad:'linear-gradient(145deg,#d69e2e,#ecc94b,#b7791f)',tc:'#1a1a1a',chip:'gold'},
+  amex_platinum:{name:'Amex Platinum',issuer:'amex',network:'amex',grad:'linear-gradient(145deg,#718096,#e2e8f0,#718096)',tc:'#1a1a1a',chip:'silver'},
+  discover_it:{name:'Discover it',issuer:'discover',network:'discover',grad:'linear-gradient(135deg,#c05621,#ed8936)',tc:'#fff',chip:'gold'},
+  capitalone_venture:{name:'Capital One Venture',issuer:'capitalone',network:'visa',grad:'linear-gradient(135deg,#1a1a1a,#2d2d2d)',tc:'#fff',chip:'gold'},
+  citi_double:{name:'Citi Double Cash',issuer:'citi',network:'mastercard',grad:'linear-gradient(135deg,#1a365d,#2a4365)',tc:'#fff',chip:'gold'},
+  apple_card:{name:'Apple Card',issuer:'apple',network:'mastercard',grad:'linear-gradient(145deg,#f7fafc,#e2e8f0)',tc:'#1a1a1a',chip:'white'},
+  wellsfargo:{name:'Wells Fargo Active Cash',issuer:'wellsfargo',network:'visa',grad:'linear-gradient(135deg,#9b2c2c,#e53e3e)',tc:'#fff',chip:'gold'},
+  bofa:{name:'Bank of America Cash',issuer:'bofa',network:'visa',grad:'linear-gradient(135deg,#1a365d,#2b6cb0)',tc:'#fff',chip:'gold'},
+};
+
+// ============================================================
+//  FICO FACTOR DEFINITIONS
+// ============================================================
+const FICO=[
+  {id:'payment',name:'Payment History',wt:35,icon:'📅',color:C.success,desc:'Pay all bills on time. Even one missed payment can significantly hurt your score.',tips:['Set up autopay for minimums','Pay before due date','1 late payment = -100+ points']},
+  {id:'utilization',name:'Credit Utilization',wt:30,icon:'📊',color:C.info,desc:'Keep balances under 30% of limits. Under 10% is ideal for maximum score impact.',tips:['Under 30% is good','Under 10% is excellent','Pay before statement closes to lower reported balance']},
+  {id:'length',name:'Credit History',wt:15,icon:'⏳',color:C.purple,desc:'Longer history is better. The average age of all your accounts matters.',tips:['Keep old accounts open','Don\'t close your oldest card','Patience is key — this improves naturally']},
+  {id:'mix',name:'Credit Mix',wt:10,icon:'🎯',color:'#ec4899',desc:'Having different credit types (revolving + installment) shows responsible management.',tips:['Mix revolving & installment credit','Quality over quantity']},
+  {id:'inquiries',name:'New Credit',wt:10,icon:'🔍',color:C.warning,desc:'Too many hard inquiries in a short period signals risk to lenders.',tips:['Limit applications to 1-2 per year','Hard inquiries stay on report for 2 years','Rate-shopping for mortgages counts as 1']},
+];
+
+// ============================================================
+//  UTILS
+// ============================================================
+const TODAY=new Date();TODAY.setHours(0,0,0,0);
+const addD=(d,n)=>{const r=new Date(d);r.setDate(r.getDate()+n);return r};
+const fmtD=d=>d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+const fmtFull=d=>d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+const daysB=(a,b)=>Math.round((b-a)/864e5);
+const fmt$=n=>n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtK=n=>n>=1000?`$${(n/1000).toFixed(0)}k`:`$${n}`;
+
+// Calculate billing cycle details
+const calcCycle=(cd,dd)=>{
+  const t=new Date(TODAY);
+  let lc=new Date(t.getFullYear(),t.getMonth(),cd);if(lc>t)lc.setMonth(lc.getMonth()-1);
+  let nc=new Date(t.getFullYear(),t.getMonth(),cd);if(nc<=t)nc.setMonth(nc.getMonth()+1);
+  let due=new Date(lc.getFullYear(),lc.getMonth(),dd);if(due<=lc)due.setMonth(due.getMonth()+1);if(due<t)due.setMonth(due.getMonth()+1);
+  const op=addD(lc,1),opt=addD(due,-2);
+  const so=daysB(op,t),uc=daysB(t,nc),ud=daysB(t,due),uo=daysB(t,opt);
+  const gr=daysB(lc,due),fu=Math.max(0,daysB(lc,t)),cl=daysB(op,nc);
+  // bestBuy: 1-5 days after statement close = maximum float window
+  const bestBuyStart=addD(lc,1),bestBuyEnd=addD(lc,5);
+  const inBestWindow=t>=bestBuyStart&&t<=bestBuyEnd;
+  return{op,lc,nc,due,opt,so,uc,ud,uo,gr,fu,mf:gr+cl,cl,fst:ud,fnc:uc+gr,over:ud<0,danger:ud>=0&&ud<=2,warn:ud>2&&ud<=5,bestBuyStart,bestBuyEnd,inBestWindow,maxFloat:gr+cl};
+};
+
+// Effective APY from daily compounding: (1 + APR/365)^365 - 1
+const aprToApy=apr=>((Math.pow(1+(apr/100/365),365)-1)*100).toFixed(2);
+
+// Estimated yearly interest if carrying vs paying full
+const calcYearlySavings=(bal,apr)=>bal*(apr/100);
+
+// ============================================================
+//  DEMO DATA
+// ============================================================
+const DEMO=[
+  {id:'1',cardType:'chase_sapphire_preferred',last:'4532',name:'JOHN DOE',limit:15000,bal:3240,stmt:2890,apr:21.49,cd:12,dd:7,opened:'2019-03-15'},
+  {id:'2',cardType:'amex_gold',last:'1008',name:'JOHN DOE',limit:25000,bal:1856,stmt:1245,apr:20.99,cd:22,dd:17,opened:'2020-08-22'},
+  {id:'3',cardType:'discover_it',last:'9876',name:'JOHN DOE',limit:8000,bal:4120,stmt:3850,apr:24.99,cd:5,dd:1,opened:'2018-01-10'},
+];
+
+// ============================================================
+//  LOGO & VISUAL COMPONENTS
+// ============================================================
+const Logo=()=><div className="float" style={{position:'relative'}}>
+  <div style={{position:'absolute',inset:-4,background:'linear-gradient(135deg,#F48120,#FAAE40)',borderRadius:16,filter:'blur(12px)',opacity:.4}}/>
+  <svg width={44} height={44} viewBox="0 0 48 48" style={{position:'relative',filter:'drop-shadow(0 4px 12px rgba(244,129,32,.3))'}}>
+    <defs>
+      <linearGradient id="lg" x1="0" y1="0" x2="48" y2="48"><stop stopColor="#F48120"/><stop offset=".5" stopColor="#FAAE40"/><stop offset="1" stopColor="#F48120"/></linearGradient>
+      <linearGradient id="lg2" x1="0" y1="0" x2="0" y2="48"><stop stopColor="rgba(255,255,255,.3)"/><stop offset="1" stopColor="rgba(255,255,255,0)"/></linearGradient>
+    </defs>
+    <rect width="48" height="48" rx="14" fill="url(#lg)"/>
+    <rect width="48" height="48" rx="14" fill="url(#lg2)"/>
+    <path d="M14 17h20M14 24h20M14 31h12" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeOpacity=".9"/>
+    <circle cx="34" cy="31" r="4.5" fill="#fff" fillOpacity=".95"/>
+    <circle cx="34" cy="31" r="2" fill="#F48120"/>
+  </svg>
+</div>;
+
+const CreditCard=({type,last,name='CARDHOLDER',sz='md',full=false})=>{
+  const c=CARDS[type]||CARDS.chase_sapphire_preferred;
+  const sc=sz==='sm'?.55:sz==='xs'?.35:1;
+  const w=320*sc,h=200*sc;
+  const IssuerLogo=()=>{
+    const s=sz==='sm'?.7:sz==='xs'?.5:1;
+    switch(c.issuer){
+      case'chase':return<ChaseLogo c={c.tc} w={26*s}/>;
+      case'amex':return<AmexLogo c={c.tc} w={60*s}/>;
+      case'capitalone':return<CapOneLogo c={c.tc} w={75*s}/>;
+      case'citi':return<CitiLogo c={c.tc} w={42*s}/>;
+      case'apple':return<AppleLogo c={c.tc} w={16*s}/>;
+      case'wellsfargo':return<WFLogo c={c.tc} w={85*s}/>;
+      case'bofa':return<BofALogo c={c.tc} w={90*s}/>;
+      default:return null;
+    }
+  };
+  const NetLogo=()=>{
+    const s=sz==='sm'?.65:sz==='xs'?.45:1;
+    switch(c.network){
+      case'visa':return<VisaLogo c={c.tc} w={55*s}/>;
+      case'mastercard':return<McardLogo w={42*s}/>;
+      case'discover':return<DiscoverLogo w={70*s}/>;
+      default:return null;
+    }
+  };
+  return<div style={{width:w,height:h,background:c.grad,borderRadius:14*sc,padding:16*sc,position:'relative',overflow:'hidden',boxShadow:`0 ${12*sc}px ${40*sc}px rgba(0,0,0,.3), 0 ${4*sc}px ${12*sc}px rgba(0,0,0,.2)`,display:'flex',flexDirection:'column',justifyContent:'space-between',flexShrink:0,transform:'perspective(1000px) rotateX(2deg)'}}>
+    <div style={{position:'absolute',inset:0,background:'linear-gradient(135deg,rgba(255,255,255,.15) 0%,transparent 50%,rgba(0,0,0,.1) 100%)'}}/>
+    <div style={{position:'absolute',top:0,left:0,right:0,height:'50%',background:'linear-gradient(180deg,rgba(255,255,255,.1),transparent)'}}/>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',position:'relative',zIndex:1}}><IssuerLogo/>{sz!=='xs'&&<Contactless c={c.tc} s={16*sc}/>}</div>
+    <div style={{position:'relative',zIndex:1}}><Chip t={c.chip} s={sz==='sm'?28:sz==='xs'?20:42}/></div>
+    {sz!=='xs'&&<div style={{color:c.tc,fontSize:14*sc,fontFamily:'"SF Mono",Monaco,monospace',position:'relative',zIndex:1,letterSpacing:'.1em',textShadow:'0 1px 2px rgba(0,0,0,.2)'}}>{full?'•••• •••• •••• ':'•••• '}{last}</div>}
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',position:'relative',zIndex:1}}>
+      {sz!=='xs'?<div style={{color:c.tc,fontSize:10*sc,fontWeight:600,textTransform:'uppercase',letterSpacing:'.05em',textShadow:'0 1px 2px rgba(0,0,0,.2)'}}>{name}</div>:<div style={{color:c.tc,fontSize:7,fontFamily:'monospace'}}>••{last}</div>}
+      <NetLogo/>
+    </div>
+  </div>;
+};
+
+const MiniCard=({type,last})=>{
+  const c=CARDS[type]||CARDS.chase_sapphire_preferred;
+  return<div style={{width:68,height:42,background:c.grad,borderRadius:6,padding:6,display:'flex',flexDirection:'column',justifyContent:'space-between',boxShadow:'0 4px 12px rgba(0,0,0,.25), 0 2px 4px rgba(0,0,0,.15)',position:'relative',overflow:'hidden',flexShrink:0,transition:'all .3s'}}>
+    <div style={{position:'absolute',inset:0,background:'linear-gradient(135deg,rgba(255,255,255,.2) 0%,transparent 50%)'}}/>
+    <Chip t={c.chip} s={14}/>
+    <div style={{color:c.tc,fontSize:7,fontFamily:'monospace',position:'relative',zIndex:1,letterSpacing:'.05em'}}>••{last}</div>
+  </div>;
+};
+
+// ============================================================
+//  UTIL COMPONENTS
+// ============================================================
+const PageHead=({t,s})=><div style={{marginBottom:32}}>
+  <h1 style={{fontSize:30,fontWeight:800,color:C.dark,letterSpacing:'-0.03em',lineHeight:1.1}}>{t}</h1>
+  {s&&<p style={{fontSize:15,color:C.muted,marginTop:8,lineHeight:1.5}}>{s}</p>}
+</div>;
+
+const SecHead=({t,act,onAct})=><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+  <h2 style={{fontSize:17,fontWeight:700,color:C.dark}}>{t}</h2>
+  {act&&<button onClick={onAct} style={{fontSize:13,color:C.primary,background:'none',border:'none',cursor:'pointer',fontWeight:600}}>{act} →</button>}
+</div>;
+
+// Utilization color helper
+const utilColor=(pct)=>pct<30?C.success:pct<70?C.warning:C.danger;
+const utilLabel=(pct)=>pct<30?'Healthy':pct<70?'Moderate':'High Risk';
+
+// Progress bar with color
+const UtilBar=({pct})=><div>
+  <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
+    <span style={{fontSize:11,color:C.muted,fontWeight:500}}>Utilization</span>
+    <span style={{fontSize:12,fontWeight:700,color:utilColor(pct)}}>{pct.toFixed(1)}%</span>
+  </div>
+  <div className="progress-track" style={{height:6,background:'var(--border)',borderRadius:10}}>
+    <div className="progress-bar" style={{width:`${Math.min(pct,100)}%`,background:`linear-gradient(90deg,${utilColor(pct)},${pct<30?'#34d399':pct<70?'#fbbf24':'#f87171'})`,boxShadow:`0 0 12px ${utilColor(pct)}40`}}/>
+  </div>
+</div>;
+
+// ============================================================
+//  SIDEBAR
+// ============================================================
+const Sidebar=({tab,setTab,onAdd,darkMode,setDarkMode})=>{
+  const items=[
+    {id:'dashboard',icon:'📊',label:'Dashboard'},
+    {id:'float',icon:'💰',label:'Float Tracker'},
+    {id:'cards',icon:'💳',label:'Card Vault'},
+    {id:'scorebooster',icon:'🚀',label:'Score Booster'},
+    {id:'optimizer',icon:'🎯',label:'Spend Optimizer'},
+    {id:'interest',icon:'📈',label:'Interest & APY'},
+    {id:'fico',icon:'🏆',label:'FICO Factors'},
+    {id:'rule72',icon:'📐',label:'Rule of 72'},
+    {id:'floatstrategy',icon:'🛡️',label:'Float Strategy'},
+    {id:'planner',icon:'📝',label:'Spending Planner'},
+    {id:'timeline',icon:'📅',label:'Timeline'},
+    {id:'settings',icon:'⚙️',label:'Settings'},
+  ];
+  return<aside className="sidebar-desktop" style={{width:260,height:'100vh',background:'var(--glass)',backdropFilter:'blur(24px) saturate(180%)',WebkitBackdropFilter:'blur(24px) saturate(180%)',borderRight:'1px solid var(--glass-border)',display:'flex',flexDirection:'column',position:'fixed',left:0,top:0,zIndex:100}}>
+    <div style={{padding:'28px 22px 24px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',gap:14}}>
+      <Logo/>
+      <div>
+        <div style={{fontSize:20,fontWeight:800,background:'linear-gradient(135deg,#F48120,#FAAE40)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text',letterSpacing:'-0.02em'}}>CreditPulse</div>
+        <div style={{fontSize:11,color:C.muted,fontWeight:500,marginTop:2}}>Credit Health Dashboard</div>
+      </div>
+    </div>
+    <nav style={{flex:1,padding:'16px 12px',overflowY:'auto'}}>
+      <div style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:'uppercase',letterSpacing:'.8px',padding:'8px 14px',marginBottom:8}}>Navigation</div>
+      {items.map(i=>{
+        const isActive=tab===i.id;
+        return<button key={i.id} onClick={()=>setTab(i.id)} style={{width:'100%',display:'flex',alignItems:'center',gap:12,padding:'12px 14px',marginBottom:3,background:isActive?'linear-gradient(135deg,rgba(244,129,32,.15),rgba(250,174,64,.1))':'transparent',border:'none',borderRadius:12,cursor:'pointer',borderLeft:isActive?'3px solid #F48120':'3px solid transparent',transition:'all .2s cubic-bezier(.4,0,.2,1)',position:'relative',overflow:'hidden'}}>
+          {isActive&&<div style={{position:'absolute',right:0,top:'50%',transform:'translateY(-50%)',width:4,height:20,background:'linear-gradient(180deg,#F48120,#FAAE40)',borderRadius:4}}/>}
+          <span style={{fontSize:17,filter:isActive?'none':'grayscale(20%)',transition:'filter .2s'}}>{i.icon}</span>
+          <span style={{fontSize:14,fontWeight:isActive?600:500,color:isActive?'#F48120':C.text,transition:'color .2s'}}>{i.label}</span>
+        </button>
+      })}
+    </nav>
+    <div style={{padding:'0 12px 12px'}}>
+      <button onClick={()=>setDarkMode(!darkMode)} style={{width:'100%',display:'flex',alignItems:'center',gap:10,padding:'12px 14px',background:'var(--bg)',border:'1px solid var(--border)',borderRadius:12,cursor:'pointer',color:C.muted,fontSize:13,fontWeight:500,transition:'all .2s'}}>
+        <span style={{fontSize:18}}>{darkMode?'☀️':'🌙'}</span> 
+        <span>{darkMode?'Light Mode':'Dark Mode'}</span>
+      </button>
+    </div>
+    <div style={{padding:'0 12px 24px'}}>
+      <button className="btn-primary glow" onClick={onAdd} style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:8,fontSize:14}}>
+        <span style={{fontSize:18,fontWeight:300}}>+</span> Add New Card
+      </button>
+    </div>
+  </aside>;
+};
+
+// Bottom nav for mobile
+const BottomNav=({tab,setTab})=>{
+  const items=[
+    {id:'dashboard',icon:'📊',label:'Home'},
+    {id:'float',icon:'💰',label:'Float'},
+    {id:'scorebooster',icon:'🚀',label:'Boost'},
+    {id:'optimizer',icon:'🎯',label:'Optimize'},
+    {id:'cards',icon:'💳',label:'Cards'},
+  ];
+  return<nav className="bottom-nav">
+    {items.map(i=>{
+      const isActive=tab===i.id;
+      return<button key={i.id} onClick={()=>setTab(i.id)} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:4,background:'none',border:'none',cursor:'pointer',padding:'8px 0',position:'relative'}}>
+        {isActive&&<div style={{position:'absolute',top:0,left:'50%',transform:'translateX(-50%)',width:24,height:3,background:'linear-gradient(90deg,#F48120,#FAAE40)',borderRadius:4}}/>}
+        <span style={{fontSize:22,filter:isActive?'none':'grayscale(30%) opacity(.7)',transition:'all .2s'}}>{i.icon}</span>
+        <span style={{fontSize:10,fontWeight:isActive?700:500,color:isActive?'#F48120':C.muted,transition:'all .2s'}}>{i.label}</span>
+      </button>
+    })}
+  </nav>;
+};
+
+// ============================================================
+//  DASHBOARD PAGE
+// ============================================================
+const FicoGauge=({score})=>{
+  const gc=score>=800?C.success:score>=740?'#22c55e':score>=670?C.warning:C.danger;
+  const gl=score>=800?'Exceptional':score>=740?'Very Good':score>=670?'Good':score>=580?'Fair':'Poor';
+  const pct=((score-300)/(850-300))*100;
+  return<div style={{textAlign:'center'}}>
+    <div style={{position:'relative',width:200,height:110,margin:'0 auto'}}>
+      <svg viewBox="0 0 200 110" style={{width:'100%',height:'100%',filter:'drop-shadow(0 4px 12px rgba(0,0,0,.1))'}}>
+        <defs>
+          <linearGradient id="gg" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor={C.danger}/>
+            <stop offset="25%" stopColor="#f97316"/>
+            <stop offset="50%" stopColor={C.warning}/>
+            <stop offset="75%" stopColor="#22c55e"/>
+            <stop offset="100%" stopColor={C.success}/>
+          </linearGradient>
+          <filter id="glow"><feGaussianBlur stdDeviation="3" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="var(--border)" strokeWidth="14" strokeLinecap="round"/>
+        <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="url(#gg)" strokeWidth="14" strokeLinecap="round" strokeDasharray={`${pct*2.51} 251`} filter="url(#glow)"/>
+      </svg>
+      <div style={{position:'absolute',bottom:6,left:'50%',transform:'translateX(-50%)',textAlign:'center'}}>
+        <div className="stat-number" style={{fontSize:38,fontWeight:800,color:gc,textShadow:`0 0 30px ${gc}40`}}>{score}</div>
+        <div style={{fontSize:12,fontWeight:600,color:gc,textTransform:'uppercase',letterSpacing:'.5px'}}>{gl}</div>
+      </div>
+    </div>
+  </div>;
+};
+
+const Dashboard=({cards,setTab,fico,onAdd})=>{
+  const stats=useMemo(()=>{
+    let tf=0,ts=0,af=0,tySavings=0;
+    cards.forEach(c=>{
+      const cy=calcCycle(c.cd,c.dd);
+      tf+=c.stmt;
+      ts+=c.stmt*(c.apr/100/365)*cy.fu;
+      af+=cy.fu;
+      tySavings+=calcYearlySavings(c.stmt,c.apr);
+    });
+    return{tf,ts,af:Math.round(af/Math.max(cards.length,1)),tySavings};
+  },[cards]);
+  const tl=cards.reduce((s,c)=>s+c.limit,0);
+  const tb=cards.reduce((s,c)=>s+c.bal,0);
+  const util=tl?(tb/tl)*100:0;
+
+  return<div className="fade-in">
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:32,flexWrap:'wrap',gap:16}}>
+      <div>
+        <h1 style={{fontSize:32,fontWeight:800,color:C.dark,letterSpacing:'-0.03em'}}>Dashboard</h1>
+        <p style={{fontSize:15,color:C.muted,marginTop:6}}>Your credit health at a glance</p>
+      </div>
+      <button className="btn-primary" onClick={onAdd} style={{display:'flex',alignItems:'center',gap:8,padding:'12px 24px'}}>
+        <span style={{fontSize:18,fontWeight:300}}>+</span> Add Card
+      </button>
+    </div>
+
+    {/* Hero stats */}
+    <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:24,marginBottom:24}} className="grid-responsive">
+      <div style={{background:'linear-gradient(135deg,#F48120 0%,#FAAE40 50%,#F48120 100%)',backgroundSize:'200% 200%',borderRadius:24,padding:32,color:'#fff',position:'relative',overflow:'hidden',boxShadow:'0 20px 60px rgba(244,129,32,.3)'}} className="gradient-animate">
+        <div style={{position:'absolute',right:-40,top:-40,width:200,height:200,background:'radial-gradient(circle,rgba(255,255,255,.2),transparent 70%)',borderRadius:'50%'}}/>
+        <div style={{position:'absolute',left:-20,bottom:-20,width:120,height:120,background:'radial-gradient(circle,rgba(255,255,255,.1),transparent 70%)',borderRadius:'50%'}}/>
+        <div style={{position:'relative',zIndex:1}}>
+          <div style={{fontSize:13,opacity:.9,marginBottom:8,fontWeight:500,letterSpacing:'.3px'}}>💰 Total Float Balance</div>
+          <div className="stat-number" style={{fontSize:48,fontWeight:800,letterSpacing:'-0.03em',textShadow:'0 4px 20px rgba(0,0,0,.2)'}}>${fmt$(stats.tf)}</div>
+          <div style={{fontSize:14,opacity:.9,marginTop:14,display:'flex',alignItems:'center',gap:8}}>
+            <span style={{background:'rgba(255,255,255,.2)',padding:'4px 10px',borderRadius:20,fontSize:12,fontWeight:600}}>{stats.af} days avg</span>
+            <span>interest-free float</span>
+          </div>
+        </div>
+      </div>
+      <div onClick={()=>setTab('fico')} className="section-card card-hover" style={{margin:0,padding:28,cursor:'pointer',display:'flex',flexDirection:'column',justifyContent:'center',position:'relative',overflow:'hidden'}}>
+        <div style={{position:'absolute',right:-30,bottom:-30,width:120,height:120,background:`radial-gradient(circle,${fico>=740?'rgba(16,185,129,.1)':'rgba(245,158,11,.1)'},transparent 70%)`,borderRadius:'50%'}}/>
+        <div style={{fontSize:12,color:C.muted,marginBottom:8,fontWeight:500}}>🏆 FICO Score</div>
+        <div className="stat-number" style={{fontSize:52,fontWeight:800,color:fico>=740?C.success:C.warning,lineHeight:1,textShadow:`0 0 40px ${fico>=740?'rgba(16,185,129,.3)':'rgba(245,158,11,.3)'}`}}>{fico}</div>
+        <div style={{fontSize:13,color:C.primary,fontWeight:600,marginTop:12,display:'flex',alignItems:'center',gap:4}}>View factors <span style={{fontSize:16}}>→</span></div>
+      </div>
+    </div>
+
+    {/* Quick stats */}
+    <div className="grid-4 grid-responsive" style={{marginBottom:28}}>
+      {[
+        {icon:'💵',label:'Interest Saved',value:`$${stats.ts.toFixed(2)}`,sub:'This billing cycle',color:C.success,glow:'rgba(16,185,129,.15)'},
+        {icon:'📊',label:'Utilization',value:`${util.toFixed(0)}%`,sub:util<=30?'✓ Healthy':'⚠ Above 30%',color:utilColor(util),glow:util<=30?'rgba(16,185,129,.15)':'rgba(245,158,11,.15)'},
+        {icon:'💳',label:'Total Credit',value:fmtK(tl),sub:`${cards.length} active cards`,color:C.dark,glow:'rgba(59,130,246,.1)'},
+        {icon:'📅',label:'Yearly Savings',value:`$${stats.tySavings.toFixed(0)}`,sub:'If paying in full',color:C.purple,glow:'rgba(139,92,246,.15)'},
+      ].map((s,i)=><div key={i} className="section-card card-hover" style={{margin:0,padding:20,position:'relative',overflow:'hidden'}}>
+        <div style={{position:'absolute',right:-20,bottom:-20,width:80,height:80,background:`radial-gradient(circle,${s.glow},transparent 70%)`,borderRadius:'50%'}}/>
+        <div style={{position:'relative',zIndex:1}}>
+          <div style={{fontSize:12,color:C.muted,marginBottom:8,fontWeight:500,display:'flex',alignItems:'center',gap:6}}><span style={{fontSize:16}}>{s.icon}</span>{s.label}</div>
+          <div className="stat-number" style={{fontSize:28,fontWeight:700,color:s.color}}>{s.value}</div>
+          <div style={{fontSize:12,color:C.muted,marginTop:6,fontWeight:500}}>{s.sub}</div>
+        </div>
+      </div>)}
+    </div>
+
+    {/* Card list */}
+    <SecHead t="Your Cards" act="View All" onAct={()=>setTab('cards')}/>
+    {cards.length===0&&<div style={{textAlign:'center',padding:60,color:C.muted,background:'var(--glass)',backdropFilter:'blur(20px)',borderRadius:24,border:'2px dashed var(--border)'}}>
+      <div style={{fontSize:48,marginBottom:16}}>💳</div>
+      <div style={{fontWeight:700,marginBottom:8,fontSize:18,color:C.dark}}>No cards yet</div>
+      <div style={{fontSize:14,marginBottom:24}}>Add your first credit card to start tracking</div>
+      <button className="btn-primary" onClick={onAdd}>+ Add Your First Card</button>
+    </div>}
+    {cards.map(c=>{
+      const d=CARDS[c.cardType];
+      const cy=calcCycle(c.cd,c.dd);
+      const util=c.limit?(c.bal/c.limit)*100:0;
+      const st=cy.danger?{t:'Due Soon',c:C.danger,bg:C.dangerLight}:cy.warn?{t:'Pay Soon',c:C.warning,bg:C.warningLight}:{t:'On Track',c:C.success,bg:C.successLight};
+      return<div key={c.id} onClick={()=>setTab('float')} className="section-card card-hover" style={{display:'flex',alignItems:'center',gap:18,padding:20,marginBottom:14,cursor:'pointer'}}>
+        <MiniCard type={c.cardType} last={c.last}/>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontWeight:600,color:C.dark,marginBottom:4,fontSize:15}}>{d.name}</div>
+          <div style={{fontSize:12,color:C.muted,marginBottom:8}}>Due {fmtD(cy.due)} · {cy.fst}d interest-free</div>
+          <UtilBar pct={util}/>
+        </div>
+        <div style={{textAlign:'right',flexShrink:0}}>
+          <div className="stat-number" style={{fontWeight:700,color:C.dark,marginBottom:6,fontSize:18}}>${fmt$(c.stmt)}</div>
+          <span className="tag" style={{background:st.bg,color:st.c,border:`1px solid ${st.c}20`}}>{st.t}</span>
+        </div>
+      </div>;
+    })}
+  </div>;
+};
+
+// ============================================================
+//  FLOAT TRACKER PAGE  – Premium card UI
+// ============================================================
+const FloatCard=({card,onAction})=>{
+  const d=CARDS[card.cardType];
+  const cy=calcCycle(card.cd,card.dd);
+  const sv=card.stmt*(card.apr/100/365)*cy.fu;
+  const svYearly=calcYearlySavings(card.stmt,card.apr);
+  const util=card.limit?(card.bal/card.limit)*100:0;
+  const prog=Math.min((cy.so/(cy.cl+cy.gr))*100,100);
+  const uc=utilColor(util);
+
+  return<div className="fade-in section-card card-hover" style={{marginBottom:20}}>
+    {/* Card header */}
+    <div style={{display:'flex',gap:20,marginBottom:20,flexWrap:'wrap'}}>
+      <CreditCard type={card.cardType} last={card.last} name={card.name} sz="sm"/>
+      <div style={{flex:1,minWidth:180}}>
+        <div style={{fontWeight:700,fontSize:19,color:C.dark,marginBottom:2}}>{d.name}</div>
+        <div style={{fontSize:13,color:C.muted,marginBottom:14}}>•••• •••• •••• {card.last} · APR {card.apr}%</div>
+        <div style={{display:'flex',gap:28,flexWrap:'wrap'}}>
+          <div><div style={{fontSize:10,color:C.muted,textTransform:'uppercase',letterSpacing:'.3px'}}>Statement</div><div style={{fontSize:20,fontWeight:700,color:C.dark}}>${fmt$(card.stmt)}</div></div>
+          <div><div style={{fontSize:10,color:C.muted,textTransform:'uppercase',letterSpacing:'.3px'}}>Limit</div><div style={{fontSize:20,fontWeight:700,color:C.dark}}>${fmt$(card.limit)}</div></div>
+          <div><div style={{fontSize:10,color:C.muted,textTransform:'uppercase',letterSpacing:'.3px'}}>Balance</div><div style={{fontSize:20,fontWeight:700,color:uc}}>${fmt$(card.bal)}</div></div>
+        </div>
+      </div>
+      <div style={{textAlign:'right',flexShrink:0}}>
+        <div style={{fontSize:11,color:C.muted}}>Float Days Used</div>
+        <div style={{fontSize:42,fontWeight:800,color:C.primary,lineHeight:1}}>{cy.fu}d</div>
+        <div style={{fontSize:12,color:C.success,fontWeight:600,marginTop:4}}>+${sv.toFixed(2)} saved</div>
+        <div style={{fontSize:11,color:C.muted,marginTop:2}}>${svYearly.toFixed(0)}/yr if paid full</div>
+      </div>
+    </div>
+
+    {/* Utilization */}
+    <div style={{marginBottom:16}}>
+      <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
+        <span style={{fontSize:13,fontWeight:600,color:C.dark}}>💳 Credit Utilization</span>
+        <span className="tag" style={{background:util<30?C.successLight:util<70?C.warningLight:C.dangerLight,color:utilColor(util)}}>{utilLabel(util)} · {util.toFixed(1)}%</span>
+      </div>
+      <div className="progress-track" style={{height:10}}>
+        <div className="progress-bar" style={{width:`${Math.min(util,100)}%`,background:uc}}/>
+      </div>
+      <div style={{display:'flex',justifyContent:'space-between',marginTop:4,fontSize:11,color:C.muted}}>
+        <span>$0</span><span style={{color:C.success}}>30% · ${(card.limit*.3).toFixed(0)}</span><span>${fmt$(card.limit)}</span>
+      </div>
+    </div>
+
+    {/* Cycle timeline */}
+    <div style={{marginBottom:20}}>
+      <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}>
+        <span style={{fontSize:13,fontWeight:600,color:C.dark}}>📅 Billing Cycle Progress</span>
+        <span style={{fontSize:12,color:C.muted}}>Max {cy.mf}d float</span>
+      </div>
+      <div style={{position:'relative',height:14,background:C.bg,borderRadius:7}}>
+        <div style={{position:'absolute',left:0,top:0,height:'100%',width:`${prog}%`,background:`linear-gradient(90deg,${C.info},${C.primary})`,borderRadius:7}}/>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',marginTop:10,gap:8}}>
+        {[
+          {label:'📂 Statement Open',date:cy.op,sub:`${Math.max(0,cy.so)}d ago`,color:C.info},
+          {label:'📕 Closes',date:cy.nc,sub:`${cy.uc}d left`,color:C.purple},
+          {label:'💸 Due Date',date:cy.due,sub:`${cy.fst}d left`,color:cy.danger?C.danger:cy.warn?C.warning:C.success},
+        ].map((t,i)=><div key={i} style={{background:C.bg,borderRadius:10,padding:'10px 12px',borderLeft:`3px solid ${t.color}`}}>
+          <div style={{fontSize:10,color:C.muted,marginBottom:2}}>{t.label}</div>
+          <div style={{fontWeight:700,color:C.dark}}>{fmtD(t.date)}</div>
+          <div style={{fontSize:11,color:t.color,fontWeight:600}}>{t.sub}</div>
+        </div>)}
+      </div>
+    </div>
+
+    {/* Stat boxes */}
+    <div className="grid-4" style={{marginBottom:20}}>
+      {[
+        {label:'CYCLE DAYS',value:`${cy.cl}d`,color:C.info,bg:C.infoLight},
+        {label:'GRACE PERIOD',value:`${cy.gr}d`,color:C.purple,bg:C.purpleLight},
+        {label:'FLOAT USED',value:`${cy.fu}d`,color:C.primary,bg:C.primaryLight},
+        {label:'INT. SAVED',value:`$${sv.toFixed(0)}`,color:C.success,bg:C.successLight},
+      ].map((s,i)=><div key={i} className="card-stat" style={{background:s.bg}}>
+        <div style={{fontSize:9,color:s.color,fontWeight:700,letterSpacing:'.4px',marginBottom:4}}>{s.label}</div>
+        <div style={{fontSize:20,fontWeight:800,color:C.dark}}>{s.value}</div>
+      </div>)}
+    </div>
+
+    {/* Action buttons */}
+    <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+      <button className="btn-primary" style={{flex:1,minWidth:120}} onClick={()=>onAction('pay',card)}>
+        💸 Pay ${fmt$(card.stmt)} by {fmtD(cy.opt)}
+      </button>
+      <button className="btn-ghost" onClick={()=>onAction('purchase',card)}>+ New Purchase</button>
+      <button className="btn-ghost" onClick={()=>onAction('optimize',card)}>🎯 Optimize</button>
+    </div>
+  </div>;
+};
+
+const FloatPage=({cards,onAction})=>{
+  const tf=cards.reduce((s,c)=>s+c.stmt,0);
+  const ts=cards.reduce((s,c)=>{const cy=calcCycle(c.cd,c.dd);return s+c.stmt*(c.apr/100/365)*cy.fu;},0);
+  const totalYearly=cards.reduce((s,c)=>s+calcYearlySavings(c.stmt,c.apr),0);
+  return<div className="fade-in">
+    <PageHead t="Float Tracker" s="Track your interest-free float period on each card"/>
+    <div className="grid-3" style={{marginBottom:24}}>
+      <div style={{background:`linear-gradient(135deg,${C.primary},#FAAE40)`,borderRadius:16,padding:20,color:'#fff'}}>
+        <div style={{fontSize:12,opacity:.9,marginBottom:6}}>💰 Total Float</div>
+        <div style={{fontSize:30,fontWeight:800}}>${fmt$(tf)}</div>
+      </div>
+      <div className="section-card" style={{margin:0,padding:20}}>
+        <div style={{fontSize:12,color:C.muted,marginBottom:6}}>💵 Cycle Interest Saved</div>
+        <div style={{fontSize:30,fontWeight:700,color:C.success}}>${ts.toFixed(2)}</div>
+      </div>
+      <div className="section-card" style={{margin:0,padding:20}}>
+        <div style={{fontSize:12,color:C.muted,marginBottom:6}}>📅 Est. Yearly Savings</div>
+        <div style={{fontSize:30,fontWeight:700,color:C.purple}}>${totalYearly.toFixed(0)}</div>
+      </div>
+    </div>
+    {cards.map(c=><FloatCard key={c.id} card={c} onAction={onAction}/>)}
+  </div>;
+};
+
+// ============================================================
+//  CARD VAULT PAGE
+// ============================================================
+const CardVault=({cards,onAdd,onEdit})=><div className="fade-in">
+  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:28}}>
+    <div>
+      <h1 style={{fontSize:26,fontWeight:800,color:C.dark}}>Card Vault</h1>
+      <p style={{fontSize:14,color:C.muted,marginTop:4}}>View and manage all your cards</p>
+    </div>
+    <button className="btn-primary" onClick={onAdd} style={{display:'flex',alignItems:'center',gap:6,padding:'10px 18px'}}><span>+</span> Add Card</button>
+  </div>
+  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))',gap:24}}>
+    {cards.map(c=>{
+      const d=CARDS[c.cardType];
+      const cy=calcCycle(c.cd,c.dd);
+      const util=c.limit?(c.bal/c.limit)*100:0;
+      const uc=utilColor(util);
+      const apy=aprToApy(c.apr);
+      return<div key={c.id} className="section-card card-hover" style={{padding:24}}>
+        <div style={{marginBottom:18}}><CreditCard type={c.cardType} last={c.last} name={c.name} full/></div>
+        <div style={{marginBottom:14}}><UtilBar pct={util}/></div>
+        <div className="grid-2" style={{marginBottom:14,gap:12}}>
+          {[
+            {l:'Statement',v:`$${fmt$(c.stmt)}`,c:C.dark},
+            {l:'Limit',v:`$${fmt$(c.limit)}`,c:C.dark},
+            {l:'APR',v:`${c.apr}%`,c:C.warning},
+            {l:'Eff. APY',v:`${apy}%`,c:C.danger},
+            {l:'Due Date',v:fmtD(cy.due),c:cy.danger?C.danger:C.dark},
+            {l:'Float Days',v:`${cy.fst}d`,c:C.primary},
+          ].map((s,i)=><div key={i}>
+            <div style={{fontSize:10,color:C.muted,textTransform:'uppercase',letterSpacing:'.3px',marginBottom:2}}>{s.l}</div>
+            <div style={{fontSize:16,fontWeight:700,color:s.c}}>{s.v}</div>
+          </div>)}
+        </div>
+        <button className="btn-ghost" style={{width:'100%',fontSize:13}} onClick={()=>onEdit(c)}>✏️ Edit Card Details</button>
+      </div>;
+    })}
+  </div>
+</div>;
+
+// ============================================================
+//  SPEND OPTIMIZER PAGE
+// ============================================================
+const SpendOptimizer=({cards})=>{
+  const[amt,setAmt]=useState('');
+  const[showTip,setShowTip]=useState(true);
+  const analysis=useMemo(()=>{
+    if(!amt)return null;
+    return cards.map(c=>({
+      ...c,
+      d:CARDS[c.cardType],
+      cy:calcCycle(c.cd,c.dd),
+      potentialSave: parseFloat(amt)*(c.apr/100/365)*calcCycle(c.cd,c.dd).fst,
+    })).sort((a,b)=>b.cy.fst-a.cy.fst);
+  },[cards,amt]);
+
+  // Best days explanation per card
+  const getBestDayAdvice=(c)=>{
+    const cy=calcCycle(c.cd,c.dd);
+    const daysSinceClose=cy.so;
+    if(cy.inBestWindow)return{label:'🟢 Perfect timing NOW!',color:C.success,sub:'You\'re in the optimal 1-5 day window'};
+    if(daysSinceClose<0)return{label:`⏳ Wait ${Math.abs(daysSinceClose)}d`,color:C.warning,sub:`Statement closes in ${cy.uc}d — purchase after close for max float`};
+    return{label:`Best: ${fmtD(cy.bestBuyStart)} – ${fmtD(cy.bestBuyEnd)}`,color:C.info,sub:`Makes a purchase right after statement close for ${cy.maxFloat}d float`};
+  };
+
+  return<div className="fade-in">
+    <PageHead t="Spend Optimizer" s="Find the best card and timing for maximum interest-free days"/>
+    
+    {/* How it works */}
+    {showTip&&<div style={{background:C.infoLight,border:`1px solid ${C.info}`,borderRadius:14,padding:18,marginBottom:24,position:'relative'}}>
+      <button onClick={()=>setShowTip(false)} style={{position:'absolute',top:12,right:12,background:'none',border:'none',fontSize:16,cursor:'pointer',color:C.muted}}>✕</button>
+      <div style={{fontWeight:600,color:C.info,marginBottom:6}}>💡 How Float Optimization Works</div>
+      <div style={{fontSize:13,color:C.text,lineHeight:1.7}}>Make purchases <strong>1-5 days after your statement closes</strong> to get the maximum interest-free float period (up to {Math.max(...cards.map(c=>calcCycle(c.cd,c.dd).maxFloat),0)} days). You won't owe interest until the next due date — essentially an interest-free loan from the bank.</div>
+    </div>}
+
+    {/* Input */}
+    <div className="section-card">
+      <label style={{fontSize:13,fontWeight:600,color:C.dark,display:'block',marginBottom:10}}>Purchase Amount</label>
+      <div style={{position:'relative',marginBottom:0}}>
+        <span style={{position:'absolute',left:16,top:'50%',transform:'translateY(-50%)',fontSize:20,color:C.muted,fontWeight:600}}>$</span>
+        <input type="number" value={amt} onChange={e=>setAmt(e.target.value)} placeholder="Enter purchase amount…" className="inp" style={{paddingLeft:44,fontSize:18,padding:'16px 16px 16px 44px'}}/>
+      </div>
+    </div>
+
+    {/* Results */}
+    {analysis&&<div>
+      {/* Winner */}
+      <div style={{background:`linear-gradient(135deg,${C.successLight},rgba(16,185,129,.15))`,border:`2px solid ${C.success}`,borderRadius:18,padding:20,marginBottom:16}}>
+        <div style={{display:'flex',alignItems:'center',gap:16,flexWrap:'wrap'}}>
+          <MiniCard type={analysis[0].cardType} last={analysis[0].last}/>
+          <div style={{flex:1}}>
+            <div style={{fontSize:10,color:C.success,fontWeight:700,letterSpacing:'.5px',marginBottom:2}}>⭐ BEST CARD FOR THIS PURCHASE</div>
+            <div style={{fontSize:18,fontWeight:700,color:C.dark}}>{analysis[0].d.name}</div>
+            <div style={{fontSize:12,color:C.muted,marginTop:2}}>{getBestDayAdvice(analysis[0]).sub}</div>
+          </div>
+          <div style={{textAlign:'right'}}>
+            <div style={{fontSize:38,fontWeight:800,color:C.success,lineHeight:1}}>{analysis[0].cy.fst}d</div>
+            <div style={{fontSize:11,color:C.muted}}>interest-free</div>
+            <div style={{fontSize:12,color:C.success,fontWeight:600,marginTop:2}}>Save ~${analysis[0].potentialSave.toFixed(2)}</div>
+          </div>
+        </div>
+      </div>
+      {/* Runner up cards */}
+      {analysis.slice(1).map((c,i)=>{
+        const adv=getBestDayAdvice(c);
+        return<div key={c.id} style={{display:'flex',alignItems:'center',gap:12,padding:14,background:C.surface,borderRadius:12,marginBottom:10,border:`1px solid ${C.border}`}}>
+          <span style={{fontWeight:700,color:C.muted,width:22,textAlign:'center',fontSize:14}}>{i+2}</span>
+          <MiniCard type={c.cardType} last={c.last}/>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontWeight:600,color:C.dark,marginBottom:2}}>{c.d.name}</div>
+            <span className="tag" style={{background:`${adv.color}15`,color:adv.color}}>{adv.label}</span>
+          </div>
+          <div style={{textAlign:'right',flexShrink:0}}>
+            <div style={{fontWeight:800,color:C.dark,fontSize:18}}>{c.cy.fst}d</div>
+            <div style={{fontSize:11,color:C.muted}}>free</div>
+          </div>
+        </div>;
+      })}
+    </div>}
+
+    {!analysis&&<div style={{textAlign:'center',padding:40,color:C.muted}}>
+      <div style={{fontSize:48,marginBottom:12}}>🎯</div>
+      <div style={{fontSize:14,fontWeight:500}}>Enter an amount to see the best card for maximum float</div>
+    </div>}
+
+    {/* Per-card optimal windows */}
+    <SecHead t="Optimal Purchase Windows" style={{marginTop:8}}/>
+    {cards.map(c=>{
+      const cy=calcCycle(c.cd,c.dd);
+      const adv=getBestDayAdvice(c);
+      return<div key={c.id} className="section-card card-hover" style={{display:'flex',alignItems:'center',gap:14,padding:16,marginBottom:12}}>
+        <MiniCard type={c.cardType} last={c.last}/>
+        <div style={{flex:1}}>
+          <div style={{fontWeight:600,color:C.dark,marginBottom:2}}>{CARDS[c.cardType].name}</div>
+          <div style={{fontSize:12,color:C.muted}}>Best window: {fmtD(cy.bestBuyStart)} – {fmtD(cy.bestBuyEnd)}</div>
+        </div>
+        <div style={{textAlign:'right'}}>
+          <span className="tag" style={{background:`${adv.color}15`,color:adv.color,marginBottom:4,display:'inline-block'}}>{adv.label}</span>
+          <div style={{fontSize:11,color:C.muted,marginTop:4}}>Max {cy.maxFloat}d float</div>
+        </div>
+      </div>;
+    })}
+  </div>;
+};
+
+// ============================================================
+//  INTEREST & APY PAGE
+// ============================================================
+const InterestPage=({cards})=>{
+  const[principal,setPrincipal]=useState('5000');
+  const[apr,setApr]=useState('21.99');
+  const[months,setMonths]=useState('12');
+  const chartRef=useRef(null);
+  const chartInstance=useRef(null);
+
+  const calc=useMemo(()=>{
+    const p=parseFloat(principal)||0;
+    const r=parseFloat(apr)||0;
+    const m=parseInt(months)||12;
+    const dailyRate=r/100/365;
+    const apy=((Math.pow(1+dailyRate,365)-1)*100);
+    const monthlyRate=r/100/12;
+    // Compound growth over months
+    const growth=Array.from({length:m+1},(_,i)=>({
+      month:i,
+      simple:p*(1+(r/100/12)*i),
+      compound:p*Math.pow(1+monthlyRate,i),
+    }));
+    const totalInterestSimple=growth[m].simple-p;
+    const totalInterestCompound=growth[m].compound-p;
+    return{apy,growth,totalInterestSimple,totalInterestCompound,monthlyPayment:(p*monthlyRate)/(1-Math.pow(1+monthlyRate,-m))};
+  },[principal,apr,months]);
+
+  useEffect(()=>{
+    if(!chartRef.current)return;
+    if(chartInstance.current)chartInstance.current.destroy();
+    const labels=calc.growth.map(g=>`Mo ${g.month}`);
+    chartInstance.current=new Chart(chartRef.current,{
+      type:'line',
+      data:{
+        labels,
+        datasets:[
+          {label:'With Daily Compounding',data:calc.growth.map(g=>g.compound.toFixed(2)),borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.08)',fill:true,tension:.4,pointRadius:0,borderWidth:2},
+          {label:'Simple Interest',data:calc.growth.map(g=>g.simple.toFixed(2)),borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.05)',fill:true,tension:.4,pointRadius:0,borderWidth:2,borderDash:[5,5]},
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:12}}},tooltip:{mode:'index',intersect:false}},
+        scales:{
+          y:{ticks:{callback:v=>`$${v>=1000?(v/1000).toFixed(1)+'k':v}`},grid:{color:'rgba(0,0,0,.05)'}},
+          x:{ticks:{maxTicksLimit:8},grid:{display:false}},
+        }
+      }
+    });
+    return()=>{if(chartInstance.current)chartInstance.current.destroy()};
+  },[calc]);
+
+  return<div className="fade-in">
+    <PageHead t="Interest & APY" s="Understand the true cost of carrying a balance"/>
+    <div className="grid-2" style={{marginBottom:20,gap:20}}>
+      {/* Calculator inputs */}
+      <div className="section-card" style={{padding:24}}>
+        <h3 style={{fontSize:15,fontWeight:700,color:C.dark,marginBottom:18}}>🧮 Interest Calculator</h3>
+        {[
+          {label:'Balance / Principal ($)',val:principal,set:setPrincipal,type:'number',ph:'5000'},
+          {label:'APR (%)',val:apr,set:setApr,type:'number',ph:'21.99',step:'.01'},
+          {label:'Time Period (months)',val:months,set:setMonths,type:'number',ph:'12'},
+        ].map((f,i)=><div key={i} style={{marginBottom:14}}>
+          <label style={{fontSize:12,fontWeight:600,color:C.dark,display:'block',marginBottom:6}}>{f.label}</label>
+          <input type={f.type} step={f.step} className="inp" value={f.val} onChange={e=>f.set(e.target.value)} placeholder={f.ph}/>
+        </div>)}
+        <div style={{background:C.dangerLight,border:`1px solid ${C.danger}`,borderRadius:12,padding:14,marginTop:4}}>
+          <div style={{fontSize:11,color:C.danger,fontWeight:600,marginBottom:4}}>⚠️ True Cost of Carrying Balance</div>
+          <div style={{fontSize:13,color:C.text}}>APR <strong>{apr}%</strong> → Effective APY <strong style={{color:C.danger}}>{calc.apy.toFixed(2)}%</strong> (daily compounding)</div>
+        </div>
+      </div>
+
+      {/* Result stats */}
+      <div>
+        {[
+          {icon:'📈',label:'Effective APY',value:`${calc.apy.toFixed(2)}%`,sub:'With daily compounding',color:C.danger},
+          {icon:'💸',label:`Interest over ${months}mo`,value:`$${calc.totalInterestCompound.toFixed(2)}`,sub:'With daily compounding',color:C.danger},
+          {icon:'📉',label:'Simple interest',value:`$${calc.totalInterestSimple.toFixed(2)}`,sub:'Without compounding',color:C.warning},
+          {icon:'💳',label:'Min monthly payment',value:`$${calc.monthlyPayment.toFixed(2)}`,sub:'To pay off in full',color:C.success},
+        ].map((s,i)=><div key={i} className="section-card card-hover" style={{display:'flex',alignItems:'center',gap:14,padding:14,marginBottom:10,margin:'0 0 10px'}}>
+          <div style={{fontSize:28}}>{s.icon}</div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:12,color:C.muted}}>{s.label}</div>
+            <div style={{fontSize:11,color:C.muted}}>{s.sub}</div>
+          </div>
+          <div style={{fontSize:22,fontWeight:800,color:s.color}}>{s.value}</div>
+        </div>)}
+      </div>
+    </div>
+
+    {/* Chart */}
+    <div className="section-card">
+      <h3 style={{fontSize:15,fontWeight:700,color:C.dark,marginBottom:16}}>📊 Balance Growth Over Time</h3>
+      <div style={{height:280}}>
+        <canvas ref={chartRef}/>
+      </div>
+      <div style={{display:'flex',gap:20,marginTop:12,justifyContent:'center',flexWrap:'wrap'}}>
+        <div style={{fontSize:12,color:C.muted}}>🔴 Daily compounding costs <strong style={{color:C.danger}}>${(calc.totalInterestCompound-calc.totalInterestSimple).toFixed(2)} more</strong> than simple interest</div>
+      </div>
+    </div>
+
+    {/* Your cards APR table */}
+    <div className="section-card" style={{marginTop:20}}>
+      <h3 style={{fontSize:15,fontWeight:700,color:C.dark,marginBottom:16}}>💳 Your Cards — APR vs APY</h3>
+      {cards.map(c=>{
+        const apy=parseFloat(aprToApy(c.apr));
+        const uc=c.apr>24?C.danger:c.apr>20?C.warning:C.success;
+        return<div key={c.id} style={{display:'flex',alignItems:'center',gap:14,padding:'12px 0',borderBottom:`1px solid ${C.border}`}}>
+          <MiniCard type={c.cardType} last={c.last}/>
+          <div style={{flex:1}}>
+            <div style={{fontWeight:600,color:C.dark}}>{CARDS[c.cardType].name}</div>
+            <div style={{fontSize:12,color:C.muted}}>Balance: ${fmt$(c.bal)}</div>
+          </div>
+          <div style={{textAlign:'right'}}>
+            <div style={{fontWeight:700,color:uc}}>{c.apr}% APR</div>
+            <div style={{fontSize:12,color:C.danger}}>{apy}% APY</div>
+          </div>
+        </div>;
+      })}
+    </div>
+  </div>;
+};
+
+// ============================================================
+//  FICO FACTORS PAGE
+// ============================================================
+const FicoPage=({cards,fico})=>{
+  const[exp,setExp]=useState(null);
+  const sc=useMemo(()=>{
+    const tl=cards.reduce((s,c)=>s+c.limit,0);
+    const tb=cards.reduce((s,c)=>s+c.bal,0);
+    const ut=tl?(tb/tl)*100:0;
+    const aa=cards.reduce((s,c)=>{const o=new Date(c.opened||'2020-01-01');return s+(TODAY-o)/(365.25*864e5);},0)/Math.max(cards.length,1);
+    const hod=cards.some(c=>calcCycle(c.cd,c.dd).over);
+    return{
+      payment:{s:hod?40:95,st:hod?'poor':'excellent'},
+      utilization:{s:ut<=10?98:ut<=30?85:ut<=50?60:40,st:ut<=10?'excellent':ut<=30?'good':ut<=50?'fair':'poor',v:ut},
+      length:{s:aa>=7?95:aa>=5?80:aa>=3?65:50,st:aa>=5?'excellent':aa>=3?'good':'fair',v:aa},
+      mix:{s:cards.length>=4?90:cards.length>=3?75:60,st:cards.length>=3?'excellent':'good'},
+      inquiries:{s:75,st:'good'},
+    };
+  },[cards]);
+  const tl=cards.reduce((s,c)=>s+c.limit,0);
+  return<div className="fade-in">
+    <PageHead t="FICO Factors" s="Understand what drives your credit score"/>
+    <div className="grid-2" style={{marginBottom:24,gap:20}}>
+      <div className="section-card" style={{textAlign:'center'}}>
+        <h3 style={{fontSize:14,fontWeight:700,marginBottom:16}}>Your FICO Score</h3>
+        <FicoGauge score={fico}/>
+        <div style={{fontSize:12,color:C.muted,marginTop:10}}>Updated {fmtD(TODAY)}</div>
+      </div>
+      <div style={{background:`linear-gradient(135deg,${C.primary},#FAAE40)`,borderRadius:18,padding:24,color:'#fff'}}>
+        <h3 style={{fontSize:14,fontWeight:700,marginBottom:16}}>Score Breakdown</h3>
+        {FICO.map(f=><div key={f.id} style={{display:'flex',alignItems:'center',gap:10,marginBottom:12}}>
+          <span style={{fontSize:14}}>{f.icon}</span>
+          <div style={{flex:1}}>
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:3}}><span style={{fontSize:11}}>{f.name}</span><span style={{fontSize:11,fontWeight:600}}>{f.wt}%</span></div>
+            <div style={{height:5,background:'rgba(255,255,255,.3)',borderRadius:3}}><div style={{width:`${sc[f.id].s}%`,height:'100%',background:'rgba(255,255,255,.9)',borderRadius:3}}/></div>
+          </div>
+        </div>)}
+      </div>
+    </div>
+    <div className="grid-4" style={{marginBottom:24}}>
+      {[
+        {icon:'📊',label:'Utilization',value:`${sc.utilization.v.toFixed(1)}%`,color:sc.utilization.v<=30?C.success:C.warning},
+        {icon:'💳',label:'Total Credit',value:`$${(tl/1000).toFixed(0)}k`,color:C.dark},
+        {icon:'⏳',label:'Avg Age',value:`${sc.length.v.toFixed(1)}yr`,color:C.purple},
+        {icon:'📅',label:'On-Time',value:'100%',color:C.success},
+      ].map((s,i)=><div key={i} className="section-card" style={{padding:16,margin:0}}>
+        <div style={{fontSize:11,color:C.muted}}>{s.icon} {s.label}</div>
+        <div style={{fontSize:22,fontWeight:700,color:s.color,marginTop:4}}>{s.value}</div>
+      </div>)}
+    </div>
+    {FICO.map(f=>{
+      const s=sc[f.id];
+      const stc=s.st==='excellent'?C.success:s.st==='good'?'#22c55e':s.st==='fair'?C.warning:C.danger;
+      return<div key={f.id} className="section-card" style={{marginBottom:10,padding:0,overflow:'hidden'}}>
+        <div onClick={()=>setExp(exp===f.id?null:f.id)} style={{padding:18,cursor:'pointer',display:'flex',alignItems:'center',gap:14}}>
+          <div style={{width:44,height:44,borderRadius:12,background:`${f.color}15`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}}>{f.icon}</div>
+          <div style={{flex:1}}>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:2}}><span style={{fontWeight:700,fontSize:15,color:C.dark}}>{f.name}</span><span className="tag" style={{background:`${stc}15`,color:stc}}>{s.st.charAt(0).toUpperCase()+s.st.slice(1)}</span></div>
+            <div style={{fontSize:12,color:C.muted}}>{f.wt}% of your score</div>
+          </div>
+          <div style={{textAlign:'right',minWidth:70}}>
+            <div style={{width:60,height:6,background:C.bg,borderRadius:3,marginLeft:'auto'}}><div style={{width:`${s.s}%`,height:'100%',background:stc,borderRadius:3}}/></div>
+            <div style={{fontSize:11,fontWeight:600,color:stc,marginTop:4}}>{s.s}%</div>
+          </div>
+          <span style={{color:C.muted,fontSize:18,display:'inline-block',transform:exp===f.id?'rotate(90deg)':'',transition:'transform .2s'}}>›</span>
+        </div>
+        {exp===f.id&&<div style={{padding:'0 18px 18px',borderTop:`1px solid ${C.border}`}}>
+          <p style={{fontSize:13,color:C.text,marginBottom:14,paddingTop:14}}>{f.desc}</p>
+          <div style={{background:C.bg,borderRadius:12,padding:14}}>
+            <div style={{fontSize:12,fontWeight:600,marginBottom:10,color:C.dark}}>💡 Tips to Improve</div>
+            {f.tips.map((t,i)=><div key={i} style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:8}}>
+              <span style={{color:C.success,marginTop:1}}>✓</span>
+              <span style={{fontSize:13,color:C.text}}>{t}</span>
+            </div>)}
+          </div>
+        </div>}
+      </div>;
+    })}
+    <div className="section-card" style={{marginTop:8}}>
+      <h3 style={{fontSize:15,fontWeight:700,marginBottom:16,color:C.dark}}>🎯 Score Impact Simulator</h3>
+      <div className="grid-2">
+        {[
+          {icon:'💳',label:'Pay down $1,000',pts:'+15-25',color:C.success,bg:C.successLight},
+          {icon:'🎯',label:'Under 10% utilization',pts:'+20-40',color:C.success,bg:C.successLight},
+          {icon:'⚠️',label:'Miss one payment',pts:'-100+',color:C.danger,bg:C.dangerLight},
+          {icon:'🔍',label:'New hard inquiry',pts:'-5-10',color:C.warning,bg:C.warningLight},
+        ].map((s,i)=><div key={i} style={{background:s.bg,borderRadius:12,padding:16}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}><span>{s.icon}</span><span style={{fontWeight:600,color:C.dark,fontSize:13}}>{s.label}</span></div>
+          <div style={{display:'flex',alignItems:'baseline',gap:6}}><span style={{fontSize:26,fontWeight:800,color:s.color}}>{s.pts}</span><span style={{fontSize:12,color:C.muted}}>pts</span></div>
+        </div>)}
+      </div>
+    </div>
+  </div>;
+};
+
+// ============================================================
+//  TIMELINE PAGE
+// ============================================================
+const Timeline=({cards})=>{
+  const evts=[];
+  cards.forEach(c=>{
+    const cy=calcCycle(c.cd,c.dd);
+    const d=CARDS[c.cardType];
+    evts.push(
+      {dt:cy.nc,t:'close',n:d.name,last:c.last,cl:C.purple,bg:C.purpleLight,icon:'📕'},
+      {dt:cy.bestBuyStart,t:'opt',n:d.name,last:c.last,cl:C.success,bg:C.successLight,icon:'⭐'},
+      {dt:cy.due,t:'due',n:d.name,last:c.last,cl:C.danger,bg:C.dangerLight,icon:'💸'},
+    );
+  });
+  evts.sort((a,b)=>a.dt-b.dt);
+  return<div className="fade-in">
+    <PageHead t="Timeline" s="Upcoming payment dates and key events"/>
+    <div className="section-card">
+      {evts.slice(0,15).map((e,i)=>{
+        const isPast=e.dt<TODAY;
+        const isToday=daysB(TODAY,e.dt)===0;
+        return<div key={i} style={{display:'flex',gap:16,alignItems:'center',padding:'14px 0',borderBottom:i<14?`1px solid ${C.border}`:'none',opacity:isPast?.45:1}}>
+          <div style={{width:36,height:36,borderRadius:10,background:e.bg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>{e.icon}</div>
+          <div style={{flex:1}}>
+            <div style={{fontWeight:600,color:C.dark,marginBottom:2}}>
+              {e.t==='close'?'Statement Closes':e.t==='opt'?'Optimal Purchase Window':e.t==='due'?'Payment Due':'Event'}
+              {isToday&&<span className="tag" style={{background:C.primaryLight,color:C.primary,marginLeft:8}}>Today</span>}
+            </div>
+            <div style={{fontSize:12,color:C.muted}}>{e.n} ••{e.last}</div>
+          </div>
+          <div style={{textAlign:'right'}}>
+            <div style={{padding:'4px 14px',background:e.bg,color:e.cl,borderRadius:20,fontSize:12,fontWeight:600}}>{fmtD(e.dt)}</div>
+            {!isPast&&<div style={{fontSize:11,color:C.muted,marginTop:4}}>{daysB(TODAY,e.dt)}d away</div>}
+          </div>
+        </div>;
+      })}
+    </div>
+  </div>;
+};
+
+// ============================================================
+//  RULE OF 72 PAGE
+// ============================================================
+const Rule72Page=()=>{
+  const[rate,setRate]=useState('21.99');
+  const[principal,setPrincipal]=useState('5000');
+  const years=rate?(72/parseFloat(rate)).toFixed(1):0;
+  const doubled=parseFloat(principal)*2;
+  
+  return<div className="fade-in">
+    <PageHead t="The Rule of 72 & Inverse" s="The Law of the Harvest: Understanding Compounding"/>
+    
+    {/* Hero Section */}
+    <div style={{background:`linear-gradient(135deg,#1e293b,#334155)`,borderRadius:20,padding:32,marginBottom:24,color:'#fff',position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',right:-40,top:-40,width:200,height:200,background:'rgba(244,129,32,.15)',borderRadius:'50%'}}/>
+      <div style={{position:'absolute',right:40,bottom:-60,width:150,height:150,background:'rgba(139,92,246,.1)',borderRadius:'50%'}}/>
+      <div style={{position:'relative',zIndex:1}}>
+        <div style={{fontSize:13,color:'#94a3b8',marginBottom:8,fontWeight:600,letterSpacing:'.5px'}}>📜 THE LAW OF THE HARVEST</div>
+        <h2 style={{fontSize:28,fontWeight:800,marginBottom:12}}>The Rule of 72</h2>
+        <p style={{fontSize:15,lineHeight:1.7,opacity:.9,maxWidth:600}}>
+          "Knowledge begins with respect for the law of compounding." This ancient financial principle reveals how quickly money grows — or how fast debt consumes.
+        </p>
+      </div>
+    </div>
+
+    {/* The Formula */}
+    <div className="section-card" style={{marginBottom:20}}>
+      <h3 style={{fontSize:18,fontWeight:700,color:C.dark,marginBottom:16}}>📐 The Formula</h3>
+      <div style={{background:C.bg,borderRadius:16,padding:24,textAlign:'center',marginBottom:20}}>
+        <div style={{fontSize:14,color:C.muted,marginBottom:8}}>Years to Double =</div>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:12}}>
+          <div style={{fontSize:48,fontWeight:800,color:C.primary}}>72</div>
+          <div style={{fontSize:32,color:C.muted}}>÷</div>
+          <div style={{display:'flex',flexDirection:'column',alignItems:'center'}}>
+            <div style={{fontSize:32,fontWeight:700,color:C.dark}}>Interest Rate</div>
+            <div style={{fontSize:13,color:C.muted}}>(as a percentage)</div>
+          </div>
+        </div>
+      </div>
+      <p style={{fontSize:14,color:C.text,lineHeight:1.8}}>
+        This elegant shortcut tells you <strong>how many years</strong> it takes for money to double at a given interest rate. It works for both <span style={{color:C.success,fontWeight:600}}>wealth building</span> and <span style={{color:C.danger,fontWeight:600}}>debt accumulation</span>.
+      </p>
+    </div>
+
+    {/* Interactive Calculator */}
+    <div className="section-card" style={{marginBottom:20}}>
+      <h3 style={{fontSize:18,fontWeight:700,color:C.dark,marginBottom:16}}>🧮 See It In Action</h3>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:20}}>
+        <div>
+          <label style={{fontSize:12,fontWeight:600,color:C.dark,display:'block',marginBottom:8}}>Starting Amount ($)</label>
+          <input type="number" className="inp" value={principal} onChange={e=>setPrincipal(e.target.value)} placeholder="5000"/>
+        </div>
+        <div>
+          <label style={{fontSize:12,fontWeight:600,color:C.dark,display:'block',marginBottom:8}}>Interest Rate (%)</label>
+          <input type="number" className="inp" value={rate} onChange={e=>setRate(e.target.value)} placeholder="21.99"/>
+        </div>
+      </div>
+      <div style={{background:`linear-gradient(135deg,${C.dangerLight},rgba(239,68,68,.15))`,border:`2px solid ${C.danger}`,borderRadius:16,padding:20,textAlign:'center'}}>
+        <div style={{fontSize:13,color:C.danger,fontWeight:600,marginBottom:8}}>At {rate}% interest...</div>
+        <div style={{fontSize:48,fontWeight:800,color:C.danger}}>{years} years</div>
+        <div style={{fontSize:14,color:C.text,marginTop:8}}>
+          <strong>${parseFloat(principal).toLocaleString()}</strong> becomes <strong>${doubled.toLocaleString()}</strong>
+        </div>
+      </div>
+    </div>
+
+    {/* The Inverse: Wealth vs Burden */}
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20,marginBottom:24}}>
+      {/* Wealth Side */}
+      <div className="section-card" style={{margin:0,borderLeft:`4px solid ${C.success}`}}>
+        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:16}}>
+          <div style={{width:44,height:44,borderRadius:12,background:C.successLight,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}}>📈</div>
+          <div>
+            <div style={{fontSize:16,fontWeight:700,color:C.success}}>WEALTH</div>
+            <div style={{fontSize:12,color:C.muted}}>The Rule Works FOR You</div>
+          </div>
+        </div>
+        <div style={{marginBottom:16}}>
+          {[
+            {rate:'7%',years:'10.3 years',note:'S&P 500 average'},
+            {rate:'10%',years:'7.2 years',note:'Growth stocks'},
+            {rate:'12%',years:'6 years',note:'Aggressive investing'},
+          ].map((r,i)=><div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 0',borderBottom:i<2?`1px solid ${C.border}`:'none'}}>
+            <div>
+              <div style={{fontWeight:600,color:C.dark}}>{r.rate} return</div>
+              <div style={{fontSize:11,color:C.muted}}>{r.note}</div>
+            </div>
+            <div style={{fontWeight:700,color:C.success}}>{r.years}</div>
+          </div>)}
+        </div>
+        <div style={{background:C.successLight,borderRadius:10,padding:12,fontSize:13,color:C.success,fontWeight:500}}>
+          💡 At 7% returns, $10k becomes $20k in ~10 years, then $40k in ~20 years
+        </div>
+      </div>
+
+      {/* Burden Side */}
+      <div className="section-card" style={{margin:0,borderLeft:`4px solid ${C.danger}`}}>
+        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:16}}>
+          <div style={{width:44,height:44,borderRadius:12,background:C.dangerLight,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}}>📉</div>
+          <div>
+            <div style={{fontSize:16,fontWeight:700,color:C.danger}}>BURDEN</div>
+            <div style={{fontSize:12,color:C.muted}}>The Rule Works AGAINST You</div>
+          </div>
+        </div>
+        <div style={{marginBottom:16}}>
+          {[
+            {rate:'18%',years:'4 years',note:'Store credit cards'},
+            {rate:'22%',years:'3.3 years',note:'Average credit card'},
+            {rate:'29%',years:'2.5 years',note:'Penalty APR'},
+          ].map((r,i)=><div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 0',borderBottom:i<2?`1px solid ${C.border}`:'none'}}>
+            <div>
+              <div style={{fontWeight:600,color:C.dark}}>{r.rate} APR</div>
+              <div style={{fontSize:11,color:C.muted}}>{r.note}</div>
+            </div>
+            <div style={{fontWeight:700,color:C.danger}}>{r.years}</div>
+          </div>)}
+        </div>
+        <div style={{background:C.dangerLight,borderRadius:10,padding:12,fontSize:13,color:C.danger,fontWeight:500}}>
+          ⚠️ At 24% APR, $5k debt becomes $10k in just 3 years if unpaid
+        </div>
+      </div>
+    </div>
+
+    {/* Key Insight */}
+    <div style={{background:`linear-gradient(135deg,${C.purpleLight},rgba(139,92,246,.15))`,border:`2px solid ${C.purple}`,borderRadius:18,padding:24,marginBottom:24}}>
+      <div style={{display:'flex',alignItems:'flex-start',gap:16}}>
+        <div style={{fontSize:32}}>⚖️</div>
+        <div>
+          <h4 style={{fontSize:16,fontWeight:700,color:C.purple,marginBottom:8}}>The Inverse Law</h4>
+          <p style={{fontSize:14,color:C.text,lineHeight:1.7,marginBottom:12}}>
+            The same mathematical law that builds fortunes can also create financial prisons. The difference? <strong>Which side of the equation you're on.</strong>
+          </p>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+            <div style={{background:'rgba(255,255,255,.5)',borderRadius:10,padding:12}}>
+              <div style={{fontSize:12,color:C.success,fontWeight:600}}>INVESTOR</div>
+              <div style={{fontSize:13,color:C.dark}}>Earns interest → Money works for you</div>
+            </div>
+            <div style={{background:'rgba(255,255,255,.5)',borderRadius:10,padding:12}}>
+              <div style={{fontSize:12,color:C.danger,fontWeight:600}}>DEBTOR</div>
+              <div style={{fontSize:13,color:C.dark}}>Pays interest → You work for money</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Call to Action */}
+    <div className="section-card" style={{background:`linear-gradient(135deg,${C.primary},#FAAE40)`,border:'none',color:'#fff'}}>
+      <div style={{display:'flex',alignItems:'center',gap:16}}>
+        <div style={{fontSize:48}}>🛡️</div>
+        <div>
+          <h4 style={{fontSize:18,fontWeight:700,marginBottom:6}}>Break the Rule — Pay Early</h4>
+          <p style={{fontSize:14,opacity:.95,lineHeight:1.6}}>
+            Don't let your debt double. Every payment you make <strong>before</strong> the due date breaks the compounding cycle. The Rule of 72 only applies to money that sits — make yours move.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>;
+};
+
+// ============================================================
+//  FLOAT STRATEGY PAGE
+// ============================================================
+const FloatStrategyPage=({cards})=>{
+  const maxFloat=Math.max(...cards.map(c=>calcCycle(c.cd,c.dd).maxFloat),55);
+  
+  return<div className="fade-in">
+    <PageHead t="The Float Strategy" s="Master the Float: Using the Bank's Money for Free"/>
+    
+    {/* Hero Section */}
+    <div style={{background:`linear-gradient(135deg,${C.primary},#FAAE40)`,borderRadius:20,padding:32,marginBottom:24,color:'#fff',position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',right:-30,top:-30,width:180,height:180,background:'rgba(255,255,255,.1)',borderRadius:'50%'}}/>
+      <div style={{position:'relative',zIndex:1}}>
+        <div style={{fontSize:13,opacity:.9,marginBottom:8,fontWeight:600,letterSpacing:'.5px'}}>🎯 THE INTEREST-FREE PATH</div>
+        <h2 style={{fontSize:28,fontWeight:800,marginBottom:12}}>Master the Float</h2>
+        <p style={{fontSize:15,lineHeight:1.7,opacity:.95,maxWidth:600}}>
+          Every credit card gives you a secret window: <strong>45-55 days</strong> of free money. Learn the exact strategy to use the bank's money without paying a cent in interest.
+        </p>
+      </div>
+    </div>
+
+    {/* The Result Preview */}
+    <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16,marginBottom:24}}>
+      {[
+        {icon:'🆓',label:'Interest-Free Days',value:`${maxFloat}`,unit:'days',color:C.primary},
+        {icon:'💰',label:'Interest Charged',value:'$0',unit:'if done right',color:C.success},
+        {icon:'🛡️',label:'APR Protection',value:'100%',unit:'shielded',color:C.purple},
+      ].map((s,i)=><div key={i} className="section-card card-hover" style={{margin:0,padding:20,textAlign:'center'}}>
+        <div style={{fontSize:28,marginBottom:8}}>{s.icon}</div>
+        <div style={{fontSize:32,fontWeight:800,color:s.color}}>{s.value}</div>
+        <div style={{fontSize:11,color:C.muted,marginTop:2}}>{s.unit}</div>
+        <div style={{fontSize:12,fontWeight:600,color:C.dark,marginTop:6}}>{s.label}</div>
+      </div>)}
+    </div>
+
+    {/* Step-by-Step Guide */}
+    <div className="section-card" style={{marginBottom:24}}>
+      <h3 style={{fontSize:18,fontWeight:700,color:C.dark,marginBottom:24}}>📋 The 4-Step Float Strategy</h3>
+      
+      {/* Step 1: Spend */}
+      <div style={{display:'flex',gap:16,marginBottom:24,paddingBottom:24,borderBottom:`1px solid ${C.border}`}}>
+        <div style={{width:56,height:56,borderRadius:16,background:C.infoLight,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <span style={{fontSize:28}}>💳</span>
+        </div>
+        <div style={{flex:1}}>
+          <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
+            <span style={{background:C.info,color:'#fff',width:24,height:24,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700}}>1</span>
+            <h4 style={{fontSize:16,fontWeight:700,color:C.dark}}>SPEND</h4>
+            <span style={{fontSize:12,color:C.muted}}>During the Billing Cycle</span>
+          </div>
+          <p style={{fontSize:14,color:C.text,lineHeight:1.7,marginBottom:12}}>
+            Use your card for purchases during the <strong>billing cycle</strong> (typically ~30 days). Every purchase made gets added to your running balance.
+          </p>
+          <div style={{background:C.infoLight,borderRadius:10,padding:12}}>
+            <div style={{fontSize:12,fontWeight:600,color:C.info,marginBottom:4}}>💡 Pro Tip</div>
+            <div style={{fontSize:13,color:C.text}}>Make purchases <strong>right after</strong> your statement closes for maximum float time.</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Step 2: Close */}
+      <div style={{display:'flex',gap:16,marginBottom:24,paddingBottom:24,borderBottom:`1px solid ${C.border}`}}>
+        <div style={{width:56,height:56,borderRadius:16,background:C.purpleLight,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <span style={{fontSize:28}}>📕</span>
+        </div>
+        <div style={{flex:1}}>
+          <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
+            <span style={{background:C.purple,color:'#fff',width:24,height:24,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700}}>2</span>
+            <h4 style={{fontSize:16,fontWeight:700,color:C.dark}}>CLOSE</h4>
+            <span style={{fontSize:12,color:C.muted}}>Statement Balance Locks</span>
+          </div>
+          <p style={{fontSize:14,color:C.text,lineHeight:1.7,marginBottom:12}}>
+            On your <strong>statement close date</strong>, the bank "locks in" your balance. This becomes your <strong>statement balance</strong> — the magic number you need to pay.
+          </p>
+          <div style={{background:C.purpleLight,borderRadius:10,padding:12}}>
+            <div style={{fontSize:12,fontWeight:600,color:C.purple,marginBottom:4}}>🔑 Key Point</div>
+            <div style={{fontSize:13,color:C.text}}>Only the <strong>statement balance</strong> matters for avoiding interest — not your current balance.</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Step 3: Grace Period */}
+      <div style={{display:'flex',gap:16,marginBottom:24,paddingBottom:24,borderBottom:`1px solid ${C.border}`}}>
+        <div style={{width:56,height:56,borderRadius:16,background:C.successLight,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <span style={{fontSize:28}}>⏳</span>
+        </div>
+        <div style={{flex:1}}>
+          <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
+            <span style={{background:C.success,color:'#fff',width:24,height:24,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700}}>3</span>
+            <h4 style={{fontSize:16,fontWeight:700,color:C.dark}}>THE GRACE PERIOD</h4>
+            <span style={{fontSize:12,color:C.muted}}>21-25 Days of 0% Interest</span>
+          </div>
+          <p style={{fontSize:14,color:C.text,lineHeight:1.7,marginBottom:12}}>
+            Federal law requires a minimum <strong>21-day grace period</strong> between your statement close and due date. During this time, you owe <strong>$0 in interest</strong> — the bank is literally lending you money for free.
+          </p>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
+            {[
+              {label:'Minimum',value:'21 days',color:C.warning},
+              {label:'Typical',value:'23-25 days',color:C.success},
+              {label:'Maximum',value:'~25 days',color:C.success},
+            ].map((g,i)=><div key={i} style={{background:C.bg,borderRadius:8,padding:10,textAlign:'center'}}>
+              <div style={{fontSize:11,color:C.muted}}>{g.label}</div>
+              <div style={{fontSize:14,fontWeight:700,color:g.color}}>{g.value}</div>
+            </div>)}
+          </div>
+        </div>
+      </div>
+
+      {/* Step 4: The Strike */}
+      <div style={{display:'flex',gap:16}}>
+        <div style={{width:56,height:56,borderRadius:16,background:C.primaryLight,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <span style={{fontSize:28}}>⚡</span>
+        </div>
+        <div style={{flex:1}}>
+          <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
+            <span style={{background:C.primary,color:'#fff',width:24,height:24,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700}}>4</span>
+            <h4 style={{fontSize:16,fontWeight:700,color:C.dark}}>THE STRIKE</h4>
+            <span style={{fontSize:12,color:C.muted}}>Pay FULL Balance 1-2 Days Early</span>
+          </div>
+          <p style={{fontSize:14,color:C.text,lineHeight:1.7,marginBottom:12}}>
+            Pay the <strong>full statement balance</strong> (not minimum, not current balance) <strong>1-2 days before</strong> the due date. This ensures the payment posts in time and you pay <strong>zero interest</strong>.
+          </p>
+          <div style={{background:`linear-gradient(135deg,${C.primaryLight},rgba(244,129,32,.15))`,border:`2px solid ${C.primary}`,borderRadius:12,padding:14}}>
+            <div style={{fontSize:12,fontWeight:700,color:C.primary,marginBottom:6}}>⚠️ CRITICAL: Pay the STATEMENT Balance</div>
+            <div style={{fontSize:13,color:C.text}}>
+              <strong>Statement Balance:</strong> What you owed when the statement closed ✓<br/>
+              <strong>Current Balance:</strong> Includes new purchases (not required) ✗<br/>
+              <strong>Minimum Payment:</strong> Triggers interest on remaining balance ✗
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* The Result */}
+    <div style={{background:`linear-gradient(135deg,#065f46,#059669)`,borderRadius:20,padding:28,marginBottom:24,color:'#fff'}}>
+      <div style={{display:'flex',alignItems:'center',gap:16,marginBottom:20}}>
+        <div style={{fontSize:48}}>🏆</div>
+        <div>
+          <h3 style={{fontSize:20,fontWeight:800,marginBottom:4}}>THE RESULT</h3>
+          <p style={{fontSize:14,opacity:.9}}>A 45-55 Day Interest-Free Loan</p>
+        </div>
+      </div>
+      <div style={{background:'rgba(255,255,255,.1)',borderRadius:14,padding:20}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:16}}>
+          <div style={{textAlign:'center',flex:1,minWidth:100}}>
+            <div style={{fontSize:11,opacity:.8,marginBottom:4}}>Billing Cycle</div>
+            <div style={{fontSize:28,fontWeight:800}}>~30 days</div>
+          </div>
+          <div style={{fontSize:24,opacity:.5}}>+</div>
+          <div style={{textAlign:'center',flex:1,minWidth:100}}>
+            <div style={{fontSize:11,opacity:.8,marginBottom:4}}>Grace Period</div>
+            <div style={{fontSize:28,fontWeight:800}}>~25 days</div>
+          </div>
+          <div style={{fontSize:24,opacity:.5}}>=</div>
+          <div style={{textAlign:'center',flex:1,minWidth:100}}>
+            <div style={{fontSize:11,opacity:.8,marginBottom:4}}>Total Float</div>
+            <div style={{fontSize:36,fontWeight:800,color:'#fbbf24'}}>{maxFloat} days</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Visual Shield */}
+    <div className="section-card" style={{marginBottom:24}}>
+      <h3 style={{fontSize:18,fontWeight:700,color:C.dark,marginBottom:16}}>🛡️ Your Financial Shield Against High APR</h3>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>
+        <div style={{background:C.dangerLight,borderRadius:14,padding:20,borderLeft:`4px solid ${C.danger}`}}>
+          <div style={{fontSize:14,fontWeight:700,color:C.danger,marginBottom:12}}>❌ WITHOUT Float Strategy</div>
+          <div style={{fontSize:13,color:C.text,lineHeight:1.7}}>
+            • Interest accrues from day 1<br/>
+            • <strong>21-29% APR</strong> compounds daily<br/>
+            • Minimum payments = years of debt<br/>
+            • Bank profits from your balance
+          </div>
+          <div style={{marginTop:12,padding:10,background:'rgba(255,255,255,.5)',borderRadius:8}}>
+            <div style={{fontSize:12,color:C.danger,fontWeight:600}}>$5,000 balance at 24% APR</div>
+            <div style={{fontSize:18,fontWeight:700,color:C.danger}}>= $1,200/year in interest</div>
+          </div>
+        </div>
+        <div style={{background:C.successLight,borderRadius:14,padding:20,borderLeft:`4px solid ${C.success}`}}>
+          <div style={{fontSize:14,fontWeight:700,color:C.success,marginBottom:12}}>✓ WITH Float Strategy</div>
+          <div style={{fontSize:13,color:C.text,lineHeight:1.7}}>
+            • <strong>0% interest</strong> during grace period<br/>
+            • Full balance paid = no charges<br/>
+            • You use the bank's money free<br/>
+            • Build credit while saving money
+          </div>
+          <div style={{marginTop:12,padding:10,background:'rgba(255,255,255,.5)',borderRadius:8}}>
+            <div style={{fontSize:12,color:C.success,fontWeight:600}}>$5,000 balance paid in full</div>
+            <div style={{fontSize:18,fontWeight:700,color:C.success}}>= $0 in interest</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Your Cards Float Status */}
+    <div className="section-card">
+      <h3 style={{fontSize:18,fontWeight:700,color:C.dark,marginBottom:16}}>💳 Your Cards Float Status</h3>
+      {cards.map(c=>{
+        const d=CARDS[c.cardType];
+        const cy=calcCycle(c.cd,c.dd);
+        return<div key={c.id} style={{display:'flex',alignItems:'center',gap:14,padding:'14px 0',borderBottom:`1px solid ${C.border}`}}>
+          <MiniCard type={c.cardType} last={c.last}/>
+          <div style={{flex:1}}>
+            <div style={{fontWeight:600,color:C.dark}}>{d.name}</div>
+            <div style={{fontSize:12,color:C.muted}}>Closes {fmtD(cy.nc)} · Due {fmtD(cy.due)}</div>
+          </div>
+          <div style={{textAlign:'right'}}>
+            <div style={{fontSize:20,fontWeight:800,color:C.primary}}>{cy.maxFloat}d</div>
+            <div style={{fontSize:11,color:C.muted}}>max float</div>
+          </div>
+        </div>;
+      })}
+    </div>
+  </div>;
+};
+
+// ============================================================
+//  SETTINGS PAGE
+// ============================================================
+const Settings=({darkMode,setDarkMode})=>{
+  const[notif,setNotif]=useState({pay:true,opt:true,close:false,util:true});
+  const Toggle=({on,toggle})=><button onClick={toggle} style={{width:50,height:28,borderRadius:14,background:on?C.primary:C.border,border:'none',cursor:'pointer',position:'relative',transition:'background .2s',flexShrink:0}}>
+    <div style={{width:22,height:22,borderRadius:11,background:'#fff',position:'absolute',top:3,left:on?25:3,transition:'left .2s',boxShadow:'0 1px 3px rgba(0,0,0,.2)'}}/>
+  </button>;
+  return<div className="fade-in">
+    <PageHead t="Settings" s="Customize your CreditPulse experience"/>
+    <div className="section-card" style={{marginBottom:16}}>
+      <h3 style={{fontSize:15,fontWeight:700,marginBottom:18,color:C.dark}}>🎨 Appearance</h3>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 0'}}>
+        <div><div style={{fontWeight:600,color:C.dark}}>Dark Mode</div><div style={{fontSize:12,color:C.muted}}>Switch to dark theme</div></div>
+        <Toggle on={darkMode} toggle={()=>setDarkMode(!darkMode)}/>
+      </div>
+    </div>
+    <div className="section-card" style={{marginBottom:16}}>
+      <h3 style={{fontSize:15,fontWeight:700,marginBottom:18,color:C.dark}}>🔔 Notifications</h3>
+      {[
+        {k:'pay',l:'Payment Reminders',d:'Get notified before due dates'},
+        {k:'opt',l:'Optimal Pay Alerts',d:'Reminders for best payment timing'},
+        {k:'close',l:'Statement Close Alerts',d:'Know when billing cycles end'},
+        {k:'util',l:'High Utilization Warnings',d:'Alerts when usage exceeds 30%'},
+      ].map(n=><div key={n.k} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 0',borderBottom:`1px solid ${C.border}`}}>
+        <div><div style={{fontWeight:600,color:C.dark,marginBottom:2}}>{n.l}</div><div style={{fontSize:12,color:C.muted}}>{n.d}</div></div>
+        <Toggle on={notif[n.k]} toggle={()=>setNotif({...notif,[n.k]:!notif[n.k]})}/>
+      </div>)}
+    </div>
+    <div className="section-card">
+      <h3 style={{fontSize:15,fontWeight:700,marginBottom:16,color:C.dark}}>ℹ️ About CreditPulse</h3>
+      <div style={{fontSize:13,color:C.muted,lineHeight:1.8}}>
+        <strong style={{color:C.dark}}>CreditPulse v3.0</strong> — Credit Health & Float Dashboard<br/>
+        Track billing cycles, maximize interest-free float periods, monitor credit utilization, and understand the true cost of carrying a balance. All calculations are illustrative estimates.
+      </div>
+    </div>
+  </div>;
+};
+
+// ============================================================
+//  SPENDING PLANNER PAGE
+// ============================================================
+const MONTHS_LABELS=['Nov','Dec','Jan','Feb','Mar','Apr'];
+const NOW_MONTH=TODAY.toLocaleString('en-US',{month:'long'});
+const NOW_YEAR=TODAY.getFullYear();
+
+const DEMO_TX=[
+  {id:'t1',date:'2025-04-02',amount:124.50,merchant:'Whole Foods',category:'Food',cardId:'1',note:'Weekly groceries'},
+  {id:'t2',date:'2025-04-04',amount:48.00,merchant:'Netflix / Hulu',category:'Bills',cardId:'2',note:'Streaming subs'},
+  {id:'t3',date:'2025-04-05',amount:310.00,merchant:'Delta Airlines',category:'Travel',cardId:'1',note:'Chicago trip'},
+  {id:'t4',date:'2025-04-07',amount:89.99,merchant:'Amazon',category:'Shopping',cardId:'3',note:'Home supplies'},
+  {id:'t5',date:'2025-04-08',amount:52.30,merchant:'Shell Gas',category:'Transport',cardId:'2',note:''},
+  {id:'t6',date:'2025-04-10',amount:200.00,merchant:'Gym Membership',category:'Health',cardId:'1',note:'Annual renewal'},
+  {id:'t7',date:'2025-04-11',amount:73.20,merchant:'Chipotle',category:'Food',cardId:'3',note:'Team lunch'},
+  {id:'t8',date:'2025-04-12',amount:420.00,merchant:'Macys',category:'Shopping',cardId:'2',note:'Clothes'},
+  {id:'t9',date:'2025-03-15',amount:180.00,merchant:'Uber Eats',category:'Food',cardId:'1',note:''},
+  {id:'t10',date:'2025-03-20',amount:95.00,merchant:'T-Mobile',category:'Bills',cardId:'2',note:'Phone bill'},
+];
+
+const CATEGORIES=['Food','Travel','Shopping','Bills','Transport','Health','Entertainment','Other'];
+const CAT_ICONS={Food:'🍔',Travel:'✈️',Shopping:'🛍️',Bills:'📄',Transport:'⛽',Health:'💊',Entertainment:'🎬',Other:'📦'};
+const CAT_COLORS={Food:C.primary,Travel:C.info,Shopping:C.purple,Bills:C.warning,Transport:'#14b8a6',Health:C.success,Entertainment:'#ec4899',Other:C.muted};
+const DEFAULT_BUDGETS={Food:600,Travel:500,Shopping:400,Bills:300,Transport:150,Health:200,Entertainment:100,Other:100};
+
+const buildMonthlyHistory=(txList)=>{
+  const map={};
+  const now=new Date(TODAY);
+  for(let i=5;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    map[key]=0;
+  }
+  txList.forEach(tx=>{const k=tx.date.slice(0,7);if(map[k]!==undefined)map[k]+=tx.amount;});
+  return Object.values(map);
+};
+
+const SpendingBarChart=({data,labels,darkMode})=>{
+  const ref=useRef(null);const inst=useRef(null);
+  useEffect(()=>{
+    if(!ref.current)return;
+    if(inst.current)inst.current.destroy();
+    inst.current=new Chart(ref.current,{
+      type:'bar',
+      data:{labels,datasets:[{label:'Spending',data,backgroundColor:data.map((_,i)=>i===data.length-1?'rgba(244,129,32,.9)':'rgba(244,129,32,.3)'),borderColor:data.map((_,i)=>i===data.length-1?'#F48120':'rgba(244,129,32,.5)'),borderWidth:2,borderRadius:8,borderSkipped:false}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`$${ctx.raw.toFixed(0)}`}}},scales:{y:{ticks:{callback:v=>`$${v>=1000?`${(v/1000).toFixed(1)}k`:v}`,color:darkMode?'#94a3b8':'#64748b'},grid:{color:darkMode?'rgba(255,255,255,.06)':'rgba(0,0,0,.05)'},border:{display:false}},x:{ticks:{color:darkMode?'#94a3b8':'#64748b'},grid:{display:false},border:{display:false}}}}
+    });
+    return()=>{if(inst.current)inst.current.destroy();};
+  },[data,labels,darkMode]);
+  return<canvas ref={ref}/>;
+};
+
+// Auto-categorize merchant names
+const autoCategory=(merchant)=>{
+  const m=merchant.toLowerCase();
+  if(/uber\s?eats|doordash|grubhub|chipotle|starbucks|mcdonald|wendy|burger|pizza|restaurant|cafe|coffee|food|grocery|whole foods|trader joe|kroger|safeway|publix/i.test(m))return'Food';
+  if(/amazon|walmart|target|costco|best buy|apple store|nike|macys|nordstrom|gap|zara|shop/i.test(m))return'Shopping';
+  if(/delta|united|american air|southwest|airbnb|marriott|hilton|hotel|flight|airline|travel|expedia|booking/i.test(m))return'Travel';
+  if(/netflix|hulu|spotify|disney|hbo|youtube|apple music|gaming|movie|theater|concert|ticket/i.test(m))return'Entertainment';
+  if(/shell|exxon|chevron|bp|gas|uber|lyft|taxi|parking|transit|metro/i.test(m))return'Transport';
+  if(/cvs|walgreens|pharmacy|doctor|hospital|medical|gym|fitness|health/i.test(m))return'Health';
+  if(/electric|water|internet|phone|t-mobile|verizon|att|comcast|utility|insurance|rent/i.test(m))return'Bills';
+  return'Other';
+};
+
+// CSV Import Modal
+const CSVImportModal=({onClose,onImport,cards})=>{
+  const[csvData,setCsvData]=useState('');
+  const[parsed,setParsed]=useState([]);
+  const[mapping,setMapping]=useState({date:0,amount:1,merchant:2,category:-1});
+  const[preview,setPreview]=useState([]);
+  const[step,setStep]=useState(1); // 1=upload, 2=map columns, 3=preview
+  const[defaultCard,setDefaultCard]=useState(cards[0]?.id||'');
+  const fileRef=useRef(null);
+
+  const parseCSV=(text)=>{
+    const lines=text.trim().split('\n').map(l=>l.split(',').map(c=>c.trim().replace(/^"|"$/g,'')));
+    return lines;
+  };
+
+  const handleFile=(e)=>{
+    const file=e.target.files[0];
+    if(!file)return;
+    const reader=new FileReader();
+    reader.onload=(ev)=>{
+      const text=ev.target.result;
+      setCsvData(text);
+      const lines=parseCSV(text);
+      setParsed(lines);
+      setStep(2);
+    };
+    reader.readAsText(file);
+  };
+
+  const handlePaste=(e)=>{
+    const text=e.target.value;
+    setCsvData(text);
+    if(text.includes(',')){
+      const lines=parseCSV(text);
+      setParsed(lines);
+    }
+  };
+
+  const processMapping=()=>{
+    const rows=parsed.slice(1); // skip header
+    const txs=rows.map((row,i)=>{
+      const merchant=row[mapping.merchant]||'Unknown';
+      const cat=mapping.category>=0?row[mapping.category]:autoCategory(merchant);
+      return{
+        id:'csv'+Date.now()+i,
+        date:row[mapping.date]||TODAY.toISOString().slice(0,10),
+        amount:parseFloat(row[mapping.amount]?.replace(/[$,]/g,''))||0,
+        merchant,
+        category:CATEGORIES.includes(cat)?cat:autoCategory(merchant),
+        cardId:defaultCard,
+        note:'Imported from CSV'
+      };
+    }).filter(t=>t.amount>0);
+    setPreview(txs);
+    setStep(3);
+  };
+
+  const confirmImport=()=>{
+    onImport(preview);
+    onClose();
+  };
+
+  return<div className="modal-overlay" onClick={onClose}>
+    <div className="modal-box" style={{maxWidth:600}} onClick={e=>e.stopPropagation()}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+        <h2 style={{fontSize:20,fontWeight:800,color:C.dark}}>📄 Import from CSV</h2>
+        <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.muted}}>✕</button>
+      </div>
+
+      {/* Step indicator */}
+      <div style={{display:'flex',gap:8,marginBottom:24}}>
+        {['Upload','Map Columns','Preview'].map((s,i)=><div key={i} style={{flex:1,textAlign:'center'}}>
+          <div style={{width:28,height:28,borderRadius:14,background:step>i?C.primary:step===i+1?C.primaryLight:C.bg,color:step>i?'#fff':step===i+1?C.primary:C.muted,display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700,marginBottom:4}}>{step>i?'✓':i+1}</div>
+          <div style={{fontSize:11,color:step===i+1?C.primary:C.muted,fontWeight:step===i+1?600:400}}>{s}</div>
+        </div>)}
+      </div>
+
+      {step===1&&<div>
+        <div style={{border:`2px dashed ${C.border}`,borderRadius:16,padding:40,textAlign:'center',marginBottom:16,cursor:'pointer',transition:'all .2s'}} onClick={()=>fileRef.current?.click()}>
+          <input ref={fileRef} type="file" accept=".csv,.txt" onChange={handleFile} style={{display:'none'}}/>
+          <div style={{fontSize:48,marginBottom:12}}>📁</div>
+          <div style={{fontWeight:600,color:C.dark,marginBottom:4}}>Drop CSV file here or click to browse</div>
+          <div style={{fontSize:13,color:C.muted}}>Supports Chase, Amex, Capital One, and most bank exports</div>
+        </div>
+        <div style={{textAlign:'center',color:C.muted,fontSize:13,marginBottom:12}}>— or paste CSV data —</div>
+        <textarea className="inp" placeholder="Date,Amount,Description&#10;2025-04-01,45.99,Amazon&#10;2025-04-02,12.50,Starbucks" value={csvData} onChange={handlePaste} style={{minHeight:100,fontFamily:'monospace',fontSize:12}}/>
+        {csvData&&<button className="btn-primary" onClick={()=>{const lines=parseCSV(csvData);setParsed(lines);setStep(2);}} style={{width:'100%',marginTop:12}}>Continue →</button>}
+      </div>}
+
+      {step===2&&<div>
+        <div style={{fontSize:13,color:C.muted,marginBottom:16}}>Map your CSV columns to transaction fields:</div>
+        <div style={{background:C.bg,borderRadius:12,padding:12,marginBottom:16,fontFamily:'monospace',fontSize:11,overflow:'auto'}}>
+          <div style={{color:C.muted,marginBottom:4}}>Header row:</div>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>{parsed[0]?.map((h,i)=><span key={i} style={{background:C.surface,padding:'4px 8px',borderRadius:6,border:`1px solid ${C.border}`}}>{i}: {h}</span>)}</div>
+        </div>
+        <div className="grid-2" style={{gap:12,marginBottom:16}}>
+          <div><label style={{fontSize:11,color:C.muted,display:'block',marginBottom:4}}>Date Column *</label><select className="inp" value={mapping.date} onChange={e=>setMapping({...mapping,date:+e.target.value})}>{parsed[0]?.map((h,i)=><option key={i} value={i}>{i}: {h}</option>)}</select></div>
+          <div><label style={{fontSize:11,color:C.muted,display:'block',marginBottom:4}}>Amount Column *</label><select className="inp" value={mapping.amount} onChange={e=>setMapping({...mapping,amount:+e.target.value})}>{parsed[0]?.map((h,i)=><option key={i} value={i}>{i}: {h}</option>)}</select></div>
+          <div><label style={{fontSize:11,color:C.muted,display:'block',marginBottom:4}}>Merchant/Description *</label><select className="inp" value={mapping.merchant} onChange={e=>setMapping({...mapping,merchant:+e.target.value})}>{parsed[0]?.map((h,i)=><option key={i} value={i}>{i}: {h}</option>)}</select></div>
+          <div><label style={{fontSize:11,color:C.muted,display:'block',marginBottom:4}}>Category (optional)</label><select className="inp" value={mapping.category} onChange={e=>setMapping({...mapping,category:+e.target.value})}><option value={-1}>Auto-detect</option>{parsed[0]?.map((h,i)=><option key={i} value={i}>{i}: {h}</option>)}</select></div>
+          <div style={{gridColumn:'1/-1'}}><label style={{fontSize:11,color:C.muted,display:'block',marginBottom:4}}>Default Card</label><select className="inp" value={defaultCard} onChange={e=>setDefaultCard(e.target.value)}>{cards.map(c=><option key={c.id} value={c.id}>{CARDS[c.cardType]?.name} ••{c.last}</option>)}</select></div>
+        </div>
+        <div style={{display:'flex',gap:10}}>
+          <button className="btn-ghost" onClick={()=>setStep(1)} style={{flex:1}}>← Back</button>
+          <button className="btn-primary" onClick={processMapping} style={{flex:2}}>Preview Import →</button>
+        </div>
+      </div>}
+
+      {step===3&&<div>
+        <div style={{fontSize:13,color:C.muted,marginBottom:12}}>Found <strong style={{color:C.primary}}>{preview.length}</strong> transactions to import:</div>
+        <div style={{maxHeight:300,overflow:'auto',border:`1px solid ${C.border}`,borderRadius:12,marginBottom:16}}>
+          {preview.slice(0,10).map((tx,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 14px',borderBottom:`1px solid ${C.border}`}}>
+            <span style={{fontSize:18}}>{CAT_ICONS[tx.category]||'📦'}</span>
+            <div style={{flex:1}}><div style={{fontWeight:600,color:C.dark,fontSize:13}}>{tx.merchant}</div><div style={{fontSize:11,color:C.muted}}>{tx.date} · {tx.category}</div></div>
+            <div style={{fontWeight:700,color:C.dark}}>${tx.amount.toFixed(2)}</div>
+          </div>)}
+          {preview.length>10&&<div style={{padding:12,textAlign:'center',color:C.muted,fontSize:12}}>...and {preview.length-10} more</div>}
+        </div>
+        <div style={{display:'flex',gap:10}}>
+          <button className="btn-ghost" onClick={()=>setStep(2)} style={{flex:1}}>← Back</button>
+          <button className="btn-primary" onClick={confirmImport} style={{flex:2}}>Import {preview.length} Transactions</button>
+        </div>
+      </div>}
+    </div>
+  </div>;
+};
+
+// Quick Add Component (inline, not modal)
+const QuickAdd=({cards,onAdd})=>{
+  const[amount,setAmount]=useState('');
+  const[merchant,setMerchant]=useState('');
+  const[expanded,setExpanded]=useState(false);
+
+  const quickSubmit=()=>{
+    if(!amount||!merchant)return;
+    const tx={
+      id:'q'+Date.now(),
+      date:TODAY.toISOString().slice(0,10),
+      amount:parseFloat(amount),
+      merchant,
+      category:autoCategory(merchant),
+      cardId:cards[0]?.id||'',
+      note:'Quick add'
+    };
+    onAdd(tx);
+    setAmount('');setMerchant('');setExpanded(false);
+  };
+
+  const presets=[
+    {icon:'☕',name:'Coffee',amt:6.50},
+    {icon:'🍔',name:'Lunch',amt:15.00},
+    {icon:'⛽',name:'Gas',amt:45.00},
+    {icon:'🛒',name:'Groceries',amt:85.00},
+    {icon:'🚗',name:'Uber/Lyft',amt:25.00},
+    {icon:'🎬',name:'Entertainment',amt:20.00},
+  ];
+
+  return<div className="section-card" style={{marginBottom:20,padding:0,overflow:'hidden'}}>
+    <div onClick={()=>setExpanded(!expanded)} style={{padding:'16px 20px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'space-between',background:expanded?C.primaryLight:'transparent'}}>
+      <div style={{display:'flex',alignItems:'center',gap:10}}>
+        <span style={{fontSize:20}}>⚡</span>
+        <div><span style={{fontWeight:700,color:C.dark}}>Quick Add</span><span style={{fontSize:12,color:C.muted,marginLeft:8}}>Tap to add expense fast</span></div>
+      </div>
+      <span style={{color:C.primary,fontSize:18,transform:expanded?'rotate(90deg)':'',transition:'transform .2s'}}>›</span>
+    </div>
+    {expanded&&<div style={{padding:'0 20px 20px'}}>
+      {/* Preset buttons */}
+      <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:16}}>
+        {presets.map((p,i)=><button key={i} onClick={()=>{setMerchant(p.name);setAmount(String(p.amt));}} style={{display:'flex',alignItems:'center',gap:6,padding:'8px 14px',background:C.bg,border:`1px solid ${C.border}`,borderRadius:20,cursor:'pointer',fontSize:13,color:C.dark,transition:'all .15s'}} onMouseOver={e=>e.currentTarget.style.borderColor=C.primary} onMouseOut={e=>e.currentTarget.style.borderColor=C.border}>
+          <span>{p.icon}</span>{p.name}<span style={{color:C.muted,fontSize:11}}>${p.amt}</span>
+        </button>)}
+      </div>
+      {/* Input row */}
+      <div style={{display:'flex',gap:10,alignItems:'flex-end'}}>
+        <div style={{flex:1}}><label style={{fontSize:11,color:C.muted,display:'block',marginBottom:4}}>Merchant</label><input className="inp" placeholder="Where?" value={merchant} onChange={e=>setMerchant(e.target.value)} style={{padding:'10px 14px'}}/></div>
+        <div style={{width:100}}><label style={{fontSize:11,color:C.muted,display:'block',marginBottom:4}}>Amount</label><input className="inp" type="number" placeholder="$0" value={amount} onChange={e=>setAmount(e.target.value)} style={{padding:'10px 14px'}}/></div>
+        <button className="btn-primary" onClick={quickSubmit} disabled={!amount||!merchant} style={{padding:'10px 20px',opacity:amount&&merchant?1:.5}}>+ Add</button>
+      </div>
+      <div style={{fontSize:11,color:C.muted,marginTop:10}}>💡 Category auto-detected: <strong style={{color:C.primary}}>{merchant?autoCategory(merchant):'...'}</strong></div>
+    </div>}
+  </div>;
+};
+
+// Receipt Scanner Modal
+const ReceiptScannerModal=({onClose,onAdd,cards})=>{
+  const[step,setStep]=useState(1); // 1=capture, 2=processing, 3=confirm
+  const[imageData,setImageData]=useState(null);
+  const[extracted,setExtracted]=useState({merchant:'',amount:'',date:TODAY.toISOString().slice(0,10),category:'Other',items:[]});
+  const[selectedCard,setSelectedCard]=useState(cards[0]?.id||'');
+  const fileRef=useRef(null);
+  const videoRef=useRef(null);
+  const[useCamera,setUseCamera]=useState(false);
+  const[stream,setStream]=useState(null);
+
+  // Simulated OCR extraction (in real app, would use Tesseract.js or cloud OCR)
+  const simulateOCR=(img)=>{
+    setStep(2);
+    // Simulate processing delay
+    setTimeout(()=>{
+      // Mock extracted data - in real app this would come from OCR
+      const mockResults=[
+        {merchant:'Whole Foods Market',amount:67.43,items:['Organic Milk $5.99','Avocados $4.50','Chicken Breast $12.99','Mixed Greens $6.95','Bread $4.50','Coffee Beans $14.99','Misc Items $17.51']},
+        {merchant:'Target',amount:124.87,items:['Home Supplies $45.99','Clothing $38.88','Snacks $18.50','Electronics $21.50']},
+        {merchant:'Starbucks',amount:8.45,items:['Grande Latte $6.45','Croissant $2.00']},
+        {merchant:'Shell Gas Station',amount:52.30,items:['Regular Unleaded 12.5 gal']},
+        {merchant:'Amazon',amount:89.99,items:['Wireless Headphones $89.99']},
+      ];
+      const result=mockResults[Math.floor(Math.random()*mockResults.length)];
+      setExtracted({
+        merchant:result.merchant,
+        amount:result.amount,
+        date:TODAY.toISOString().slice(0,10),
+        category:autoCategory(result.merchant),
+        items:result.items
+      });
+      setStep(3);
+    },2000);
+  };
+
+  const handleFileUpload=(e)=>{
+    const file=e.target.files[0];
+    if(!file)return;
+    const reader=new FileReader();
+    reader.onload=(ev)=>{
+      setImageData(ev.target.result);
+      simulateOCR(ev.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const startCamera=async()=>{
+    try{
+      const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+      setStream(s);
+      setUseCamera(true);
+      setTimeout(()=>{if(videoRef.current)videoRef.current.srcObject=s;},100);
+    }catch(err){
+      alert('Camera access denied. Please use file upload instead.');
+    }
+  };
+
+  const capturePhoto=()=>{
+    const video=videoRef.current;
+    const canvas=document.createElement('canvas');
+    canvas.width=video.videoWidth;
+    canvas.height=video.videoHeight;
+    canvas.getContext('2d').drawImage(video,0,0);
+    const data=canvas.toDataURL('image/jpeg');
+    setImageData(data);
+    stream?.getTracks().forEach(t=>t.stop());
+    setUseCamera(false);
+    simulateOCR(data);
+  };
+
+  const confirmReceipt=()=>{
+    const tx={
+      id:'r'+Date.now(),
+      date:extracted.date,
+      amount:parseFloat(extracted.amount)||0,
+      merchant:extracted.merchant,
+      category:extracted.category,
+      cardId:selectedCard,
+      note:`Scanned receipt: ${extracted.items.length} items`
+    };
+    onAdd(tx);
+    onClose();
+  };
+
+  useEffect(()=>{
+    return()=>{stream?.getTracks().forEach(t=>t.stop());};
+  },[stream]);
+
+  return<div className="modal-overlay" onClick={onClose}>
+    <div className="modal-box" style={{maxWidth:500}} onClick={e=>e.stopPropagation()}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+        <h2 style={{fontSize:20,fontWeight:800,color:C.dark}}>📸 Scan Receipt</h2>
+        <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.muted}}>✕</button>
+      </div>
+
+      {step===1&&<div>
+        {!useCamera?<>
+          <div style={{border:`2px dashed ${C.border}`,borderRadius:16,padding:40,textAlign:'center',marginBottom:16,cursor:'pointer'}} onClick={()=>fileRef.current?.click()}>
+            <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={handleFileUpload} style={{display:'none'}}/>
+            <div style={{fontSize:56,marginBottom:12}}>🧾</div>
+            <div style={{fontWeight:600,color:C.dark,marginBottom:4}}>Upload Receipt Photo</div>
+            <div style={{fontSize:13,color:C.muted}}>Take a photo or choose from gallery</div>
+          </div>
+          <div style={{textAlign:'center',marginBottom:16}}><span style={{color:C.muted,fontSize:13}}>— or —</span></div>
+          <button className="btn-ghost" onClick={startCamera} style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
+            <span style={{fontSize:18}}>📷</span> Use Camera
+          </button>
+        </>:<>
+          <div style={{borderRadius:16,overflow:'hidden',marginBottom:16,background:'#000'}}>
+            <video ref={videoRef} autoPlay playsInline style={{width:'100%',display:'block'}}/>
+          </div>
+          <div style={{display:'flex',gap:10}}>
+            <button className="btn-ghost" onClick={()=>{stream?.getTracks().forEach(t=>t.stop());setUseCamera(false);}} style={{flex:1}}>Cancel</button>
+            <button className="btn-primary" onClick={capturePhoto} style={{flex:2}}>📸 Capture</button>
+          </div>
+        </>}
+      </div>}
+
+      {step===2&&<div style={{textAlign:'center',padding:40}}>
+        <div style={{width:60,height:60,borderRadius:30,border:`3px solid ${C.primary}`,borderTopColor:'transparent',margin:'0 auto 20px',animation:'spin 1s linear infinite'}}/>
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+        <div style={{fontWeight:600,color:C.dark,marginBottom:8}}>Scanning Receipt...</div>
+        <div style={{fontSize:13,color:C.muted}}>Extracting merchant, items, and total</div>
+        {imageData&&<img src={imageData} style={{width:120,height:120,objectFit:'cover',borderRadius:12,marginTop:20,opacity:.5}}/>}
+      </div>}
+
+      {step===3&&<div>
+        <div style={{background:C.successLight,border:`1px solid ${C.success}`,borderRadius:12,padding:14,marginBottom:20,display:'flex',alignItems:'center',gap:10}}>
+          <span style={{fontSize:24}}>✅</span>
+          <div><div style={{fontWeight:600,color:C.success}}>Receipt Scanned!</div><div style={{fontSize:12,color:C.text}}>Review and confirm the details below</div></div>
+        </div>
+
+        {imageData&&<div style={{marginBottom:16,textAlign:'center'}}><img src={imageData} style={{maxWidth:150,maxHeight:150,objectFit:'cover',borderRadius:12,border:`1px solid ${C.border}`}}/></div>}
+
+        <div style={{background:C.bg,borderRadius:12,padding:16,marginBottom:16}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+            <div><div style={{fontSize:11,color:C.muted}}>Merchant</div><input className="inp" value={extracted.merchant} onChange={e=>setExtracted({...extracted,merchant:e.target.value,category:autoCategory(e.target.value)})} style={{marginTop:4,fontWeight:600}}/></div>
+            <div style={{textAlign:'right'}}><div style={{fontSize:11,color:C.muted}}>Total</div><input className="inp" type="number" value={extracted.amount} onChange={e=>setExtracted({...extracted,amount:e.target.value})} style={{marginTop:4,fontWeight:700,fontSize:20,width:100,textAlign:'right'}}/></div>
+          </div>
+          <div className="grid-2" style={{gap:12}}>
+            <div><label style={{fontSize:11,color:C.muted}}>Date</label><input type="date" className="inp" value={extracted.date} onChange={e=>setExtracted({...extracted,date:e.target.value})} style={{marginTop:4}}/></div>
+            <div><label style={{fontSize:11,color:C.muted}}>Category</label><select className="inp" value={extracted.category} onChange={e=>setExtracted({...extracted,category:e.target.value})} style={{marginTop:4}}>{CATEGORIES.map(c=><option key={c}>{c}</option>)}</select></div>
+            <div style={{gridColumn:'1/-1'}}><label style={{fontSize:11,color:C.muted}}>Card</label><select className="inp" value={selectedCard} onChange={e=>setSelectedCard(e.target.value)} style={{marginTop:4}}>{cards.map(c=><option key={c.id} value={c.id}>{CARDS[c.cardType]?.name} ••{c.last}</option>)}</select></div>
+          </div>
+        </div>
+
+        {extracted.items.length>0&&<div style={{marginBottom:16}}>
+          <div style={{fontSize:12,fontWeight:600,color:C.muted,marginBottom:8}}>Items Detected:</div>
+          <div style={{background:C.bg,borderRadius:10,padding:10,maxHeight:120,overflow:'auto'}}>
+            {extracted.items.map((item,i)=><div key={i} style={{fontSize:12,color:C.text,padding:'4px 0',borderBottom:i<extracted.items.length-1?`1px solid ${C.border}`:'none'}}>{item}</div>)}
+          </div>
+        </div>}
+
+        <div style={{display:'flex',gap:10}}>
+          <button className="btn-ghost" onClick={()=>{setStep(1);setImageData(null);}} style={{flex:1}}>Rescan</button>
+          <button className="btn-primary" onClick={confirmReceipt} style={{flex:2}}>Add ${parseFloat(extracted.amount).toFixed(2)} Transaction</button>
+        </div>
+      </div>}
+    </div>
+  </div>;
+};
+
+// Full Add Transaction Modal (enhanced)
+const AddTxModal=({onClose,onAdd,cards})=>{
+  const[f,setF]=useState({date:TODAY.toISOString().slice(0,10),amount:'',merchant:'',category:'Food',cardId:cards[0]?.id||'',note:''});
+  const ok=f.amount&&f.merchant&&f.category;
+  const sub=e=>{e.preventDefault();if(!ok)return;onAdd({id:'t'+Date.now(),date:f.date,amount:parseFloat(f.amount),merchant:f.merchant,category:f.category,cardId:f.cardId,note:f.note});};
+  
+  // Auto-detect category when merchant changes
+  useEffect(()=>{
+    if(f.merchant){setF(prev=>({...prev,category:autoCategory(prev.merchant)}));}
+  },[f.merchant]);
+
+  return<div className="modal-overlay" onClick={onClose}>
+    <div className="modal-box" style={{maxWidth:500}} onClick={e=>e.stopPropagation()}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+        <h2 style={{fontSize:20,fontWeight:800,color:C.dark}}>+ Add Transaction</h2>
+        <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.muted}}>✕</button>
+      </div>
+      <form onSubmit={sub}>
+        <div className="grid-2" style={{gap:12,marginBottom:16}}>
+          <div><label style={{fontSize:11,color:C.muted,display:'block',marginBottom:4}}>Date *</label><input type="date" className="inp" value={f.date} onChange={e=>setF({...f,date:e.target.value})}/></div>
+          <div><label style={{fontSize:11,color:C.muted,display:'block',marginBottom:4}}>Amount ($) *</label><input type="number" step=".01" className="inp" placeholder="0.00" value={f.amount} onChange={e=>setF({...f,amount:e.target.value})}/></div>
+          <div style={{gridColumn:'1/-1'}}><label style={{fontSize:11,color:C.muted,display:'block',marginBottom:4}}>Merchant *</label><input type="text" className="inp" placeholder="e.g. Amazon, Chipotle…" value={f.merchant} onChange={e=>setF({...f,merchant:e.target.value})}/></div>
+          <div><label style={{fontSize:11,color:C.muted,display:'block',marginBottom:4}}>Category <span style={{color:C.success,fontSize:10}}>(auto-detected)</span></label><select className="inp" value={f.category} onChange={e=>setF({...f,category:e.target.value})}>{CATEGORIES.map(c=><option key={c}>{c}</option>)}</select></div>
+          <div><label style={{fontSize:11,color:C.muted,display:'block',marginBottom:4}}>Credit Card</label><select className="inp" value={f.cardId} onChange={e=>setF({...f,cardId:e.target.value})}>{cards.map(c=><option key={c.id} value={c.id}>{CARDS[c.cardType]?.name||c.cardType} ••{c.last}</option>)}</select></div>
+          <div style={{gridColumn:'1/-1'}}><label style={{fontSize:11,color:C.muted,display:'block',marginBottom:4}}>Note (optional)</label><input type="text" className="inp" placeholder="Optional note…" value={f.note} onChange={e=>setF({...f,note:e.target.value})}/></div>
+        </div>
+        <div style={{display:'flex',gap:10}}>
+          <button type="button" onClick={onClose} className="btn-ghost" style={{flex:1}}>Cancel</button>
+          <button type="submit" disabled={!ok} className="btn-primary" style={{flex:2,opacity:ok?1:.5,cursor:ok?'pointer':'not-allowed'}}>Save Transaction</button>
+        </div>
+      </form>
+    </div>
+  </div>;
+};
+
+const BudgetRow=({cat,budget,onSet})=>{
+  const[editing,setEditing]=useState(false);
+  const[val,setVal]=useState(String(budget));
+  return<div style={{display:'flex',alignItems:'center',gap:10}}>
+    {editing?<input type="number" className="inp" value={val} onChange={e=>setVal(e.target.value)} onBlur={()=>{onSet(parseFloat(val)||budget);setEditing(false);}} style={{width:90,padding:'6px 10px',fontSize:13}} autoFocus/>:<span style={{fontWeight:600,color:C.dark,minWidth:70,fontSize:14}}>${budget}</span>}
+    <button onClick={()=>setEditing(!editing)} style={{fontSize:11,color:C.primary,background:'none',border:'none',cursor:'pointer',fontWeight:600}}>{editing?'✓ Save':'✏️ Edit'}</button>
+  </div>;
+};
+
+const SpendingPlanner=({cards,setTab})=>{
+  const[transactions,setTransactions]=useState(DEMO_TX);
+  const[budgets,setBudgets]=useState({...DEFAULT_BUDGETS});
+  const[showAdd,setShowAdd]=useState(false);
+  const[showCSV,setShowCSV]=useState(false);
+  const[showScanner,setShowScanner]=useState(false);
+  const[activeMonth,setActiveMonth]=useState('current');
+  const[expandCats,setExpandCats]=useState(true);
+  const[expandTx,setExpandTx]=useState(false);
+  const[expandBudgets,setExpandBudgets]=useState(false);
+
+  const currentMonthKey=`${TODAY.getFullYear()}-${String(TODAY.getMonth()+1).padStart(2,'0')}`;
+  const filteredTx=useMemo(()=>activeMonth==='current'?transactions.filter(t=>t.date.startsWith(currentMonthKey)):transactions,[transactions,activeMonth,currentMonthKey]);
+  const totalSpent=useMemo(()=>filteredTx.reduce((s,t)=>s+t.amount,0),[filteredTx]);
+  const totalBudget=useMemo(()=>Object.values(budgets).reduce((s,v)=>s+v,0),[budgets]);
+  const catSpend=useMemo(()=>{const m={};filteredTx.forEach(t=>{m[t.category]=(m[t.category]||0)+t.amount;});return Object.entries(m).sort((a,b)=>b[1]-a[1]);},[filteredTx]);
+  const monthlyData=useMemo(()=>buildMonthlyHistory(transactions),[transactions]);
+  
+  const handleAddTx=(tx)=>{setTransactions(prev=>[tx,...prev]);setExpandTx(true);};
+  const handleImportCSV=(txs)=>{setTransactions(prev=>[...txs,...prev]);setExpandTx(true);};
+
+  const getFloatImpact=(tx)=>{const card=cards.find(c=>c.id===tx.cardId);if(!card)return null;const cy=calcCycle(card.cd,card.dd);const txDate=new Date(tx.date);const daysAfterClose=daysB(cy.lc,txDate);if(daysAfterClose>=1&&daysAfterClose<=5)return{days:cy.fst,label:`+${cy.fst}d float (optimal!)`,color:C.success};if(daysAfterClose>5)return{days:cy.fst,label:`${cy.fst}d float`,color:C.info};return{days:cy.fst,label:`${cy.fst}d float`,color:C.warning};};
+  const moneySaved=useMemo(()=>{let saved=0;filteredTx.forEach(tx=>{const card=cards.find(c=>c.id===tx.cardId);if(!card)return;const cy=calcCycle(card.cd,card.dd);saved+=tx.amount*(card.apr/100/365)*cy.fst;});return saved;},[filteredTx,cards]);
+  const bestCard=useMemo(()=>{if(!cards.length)return null;return cards.map(c=>({...c,cy:calcCycle(c.cd,c.dd)})).sort((a,b)=>b.cy.fst-a.cy.fst)[0];},[cards]);
+  const avg6Month=monthlyData.reduce((s,v)=>s+v,0)/6;
+
+  return<div className="fade-in">
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:24,flexWrap:'wrap',gap:12}}>
+      <div><h1 style={{fontSize:28,fontWeight:800,color:C.dark,letterSpacing:'-0.02em'}}>Spending Planner</h1><p style={{fontSize:14,color:C.muted,marginTop:4}}>Track spending, set budgets, and maximize your float</p></div>
+      <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+        <button className="btn-ghost" onClick={()=>setShowCSV(true)} style={{display:'flex',alignItems:'center',gap:6,padding:'10px 16px'}}><span>📄</span> Import CSV</button>
+        <button className="btn-ghost" onClick={()=>setShowScanner(true)} style={{display:'flex',alignItems:'center',gap:6,padding:'10px 16px'}}><span>📸</span> Scan Receipt</button>
+        <button className="btn-primary" onClick={()=>setShowAdd(true)} style={{display:'flex',alignItems:'center',gap:6,padding:'10px 20px'}}><span style={{fontSize:16}}>+</span> Add Manual</button>
+      </div>
+    </div>
+
+    {/* Quick Add Section */}
+    <QuickAdd cards={cards} onAdd={handleAddTx}/>
+
+    {bestCard&&<div style={{background:'linear-gradient(135deg,rgba(59,130,246,.1),rgba(59,130,246,.05))',border:`1px solid ${C.info}`,borderRadius:16,padding:18,marginBottom:20,display:'flex',alignItems:'center',gap:14,flexWrap:'wrap'}}>
+      <span style={{fontSize:28}}>💡</span>
+      <div style={{flex:1}}><div style={{fontWeight:600,color:C.info,marginBottom:2}}>Float Tip</div><div style={{fontSize:13,color:C.text}}>Use <strong>{CARDS[bestCard.cardType]?.name}</strong> for big purchases right after statement closes for <strong>{bestCard.cy.maxFloat} days</strong> interest-free!</div></div>
+      <button className="btn-ghost" style={{fontSize:12}} onClick={()=>setTab('optimizer')}>🎯 Optimize →</button>
+    </div>}
+
+    <div style={{display:'flex',gap:8,marginBottom:20}}>
+      {[{k:'current',l:`${NOW_MONTH} Only`},{k:'all',l:'All Time'}].map(m=><button key={m.k} onClick={()=>setActiveMonth(m.k)} style={{padding:'8px 18px',borderRadius:24,border:`1px solid ${activeMonth===m.k?C.primary:C.border}`,background:activeMonth===m.k?C.primaryLight:'transparent',color:activeMonth===m.k?C.primary:C.muted,fontSize:13,fontWeight:600,cursor:'pointer',transition:'all .2s'}}>{m.l}</button>)}
+    </div>
+
+    <div className="section-card" style={{background:'linear-gradient(135deg,#1e293b,#334155)',color:'#fff',marginBottom:20,position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',right:-40,top:-40,width:200,height:200,background:'radial-gradient(circle,rgba(244,129,32,.15),transparent 70%)',borderRadius:'50%'}}/>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:20,flexWrap:'wrap',gap:12,position:'relative'}}>
+        <div><div style={{fontSize:13,opacity:.75,marginBottom:4}}>{activeMonth==='current'?`${NOW_MONTH} ${NOW_YEAR} Summary`:'All-Time Summary'}</div><div className="stat-number" style={{fontSize:48,fontWeight:800,letterSpacing:'-2px',lineHeight:1}}>${fmt$(totalSpent)}</div><div style={{fontSize:13,opacity:.75,marginTop:6}}>Spent so far · Budget: ${fmt$(totalBudget)}</div></div>
+        <div style={{textAlign:'right'}}><div style={{fontSize:11,opacity:.7,marginBottom:4}}>💵 Money Saved (Float)</div><div className="stat-number" style={{fontSize:28,fontWeight:800,color:'#34d399'}}>${moneySaved.toFixed(2)}</div><div style={{fontSize:11,opacity:.7,marginTop:2}}>by staying in grace period</div></div>
+      </div>
+      <div style={{marginBottom:16}}><div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}><span style={{fontSize:12,opacity:.8}}>Budget Used</span><span style={{fontSize:12,fontWeight:700,color:totalSpent/totalBudget>1?'#f87171':totalSpent/totalBudget>.75?'#fbbf24':'#34d399'}}>{((totalSpent/totalBudget)*100).toFixed(0)}%</span></div><div style={{height:10,background:'rgba(255,255,255,.15)',borderRadius:5}}><div style={{height:'100%',width:`${Math.min((totalSpent/totalBudget)*100,100)}%`,background:totalSpent/totalBudget>1?'#f87171':totalSpent/totalBudget>.75?'#fbbf24':'#34d399',borderRadius:5,transition:'width .5s'}}/></div></div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12}}>{[{l:'Avg Monthly',v:`$${avg6Month.toFixed(0)}`,sub:'Last 6 months'},{l:'Transactions',v:filteredTx.length,sub:activeMonth==='current'?'This month':'Total'},{l:'Remaining',v:`$${Math.max(totalBudget-totalSpent,0).toFixed(0)}`,sub:totalSpent>totalBudget?'⚠️ Over budget':'✓ On track'}].map((s,i)=><div key={i} style={{background:'rgba(255,255,255,.08)',borderRadius:12,padding:14,textAlign:'center'}}><div style={{fontSize:10,opacity:.7,marginBottom:4}}>{s.l}</div><div className="stat-number" style={{fontSize:20,fontWeight:700}}>{s.v}</div><div style={{fontSize:10,opacity:.65,marginTop:2}}>{s.sub}</div></div>)}</div>
+    </div>
+
+    <div className="section-card" style={{marginBottom:20}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}><h3 style={{fontSize:15,fontWeight:700,color:C.dark}}>📊 6-Month History</h3><span style={{fontSize:12,color:C.muted}}>Avg ${avg6Month.toFixed(0)}/mo</span></div><div style={{height:200}}><SpendingBarChart data={monthlyData} labels={MONTHS_LABELS}/></div></div>
+
+    <div className="section-card" style={{marginBottom:20,padding:0,overflow:'hidden'}}>
+      <div onClick={()=>setExpandCats(!expandCats)} style={{padding:'18px 20px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'space-between'}}><h3 style={{fontSize:15,fontWeight:700,color:C.dark}}>🗂️ Spending by Category</h3><span style={{color:C.muted,fontSize:18,transform:expandCats?'rotate(90deg)':'',transition:'transform .2s',display:'inline-block'}}>›</span></div>
+      {expandCats&&<div style={{padding:'0 20px 20px'}}>{catSpend.length===0&&<div style={{textAlign:'center',padding:32,color:C.muted}}>No transactions yet.</div>}{catSpend.map(([cat,spent])=>{const bgt=budgets[cat]||200;const pct=Math.min((spent/bgt)*100,100);const over=spent>bgt;const near=!over&&pct>75;const barColor=over?C.danger:near?C.warning:C.success;const icon=CAT_ICONS[cat]||'📦';const catColor=CAT_COLORS[cat]||C.muted;return<div key={cat} style={{marginBottom:16}}><div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}><div style={{width:36,height:36,borderRadius:10,background:`${catColor}15`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>{icon}</div><div style={{flex:1}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}><span style={{fontWeight:600,color:C.dark,fontSize:14}}>{cat}</span><div style={{display:'flex',alignItems:'center',gap:8}}><span className="stat-number" style={{fontSize:14,fontWeight:700,color:over?C.danger:C.dark}}>${spent.toFixed(0)}</span><span style={{fontSize:11,color:C.muted}}>/ ${bgt}</span><span className="tag" style={{background:`${barColor}15`,color:barColor,border:`1px solid ${barColor}30`}}>{over?'Over':near?'Near':'OK'}</span></div></div><div style={{height:6,background:C.bg,borderRadius:4}}><div style={{width:`${pct}%`,height:'100%',borderRadius:4,background:barColor,transition:'width .5s'}}/></div></div></div></div>})}</div>}
+    </div>
+
+    <div className="section-card" style={{marginBottom:20,padding:0,overflow:'hidden'}}>
+      <div onClick={()=>setExpandBudgets(!expandBudgets)} style={{padding:'18px 20px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'space-between'}}><h3 style={{fontSize:15,fontWeight:700,color:C.dark}}>💰 Monthly Budgets</h3><span style={{color:C.muted,fontSize:18,transform:expandBudgets?'rotate(90deg)':'',transition:'transform .2s',display:'inline-block'}}>›</span></div>
+      {expandBudgets&&<div style={{padding:'0 20px 20px'}}><div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:12}}>{CATEGORIES.map(cat=>{const spent=catSpend.find(([c])=>c===cat)?.[1]||0;const bgt=budgets[cat]||0;const pct=bgt?Math.min((spent/bgt)*100,100):0;const barColor=spent>bgt?C.danger:pct>75?C.warning:C.success;return<div key={cat} style={{background:C.bg,borderRadius:14,padding:16,border:`1px solid ${C.border}`}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}><div style={{display:'flex',alignItems:'center',gap:8}}><span style={{fontSize:20}}>{CAT_ICONS[cat]||'📦'}</span><span style={{fontWeight:600,fontSize:14,color:C.dark}}>{cat}</span></div><BudgetRow cat={cat} budget={bgt} onSet={v=>setBudgets({...budgets,[cat]:v})}/></div><div style={{display:'flex',justifyContent:'space-between',marginBottom:6,fontSize:12}}><span style={{color:C.muted}}>Spent: <strong style={{color:barColor}}>${spent.toFixed(0)}</strong></span><span style={{color:C.muted}}>{pct.toFixed(0)}%</span></div><div style={{height:6,background:'var(--border)',borderRadius:4}}><div style={{width:`${pct}%`,height:'100%',borderRadius:4,background:barColor,transition:'width .5s'}}/></div></div>})}</div></div>}
+    </div>
+
+    <div className="section-card" style={{padding:0,overflow:'hidden'}}>
+      <div onClick={()=>setExpandTx(!expandTx)} style={{padding:'18px 20px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'space-between'}}><h3 style={{fontSize:15,fontWeight:700,color:C.dark}}>🧾 Transactions ({filteredTx.length})</h3><div style={{display:'flex',alignItems:'center',gap:10}}><span style={{fontSize:12,color:C.muted}}>${fmt$(totalSpent)} total</span><span style={{color:C.muted,fontSize:18,transform:expandTx?'rotate(90deg)':'',transition:'transform .2s',display:'inline-block'}}>›</span></div></div>
+      {expandTx&&<div style={{padding:'0 0 8px'}}>{filteredTx.length===0&&<div style={{textAlign:'center',padding:32,color:C.muted}}>No transactions for this period.</div>}{filteredTx.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).map((tx,i,arr)=>{const fi=getFloatImpact(tx);const card=cards.find(c=>c.id===tx.cardId);const icon=CAT_ICONS[tx.category]||'📦';const catColor=CAT_COLORS[tx.category]||C.muted;return<div key={tx.id} style={{display:'flex',alignItems:'center',gap:14,padding:'14px 20px',borderBottom:i<arr.length-1?`1px solid ${C.border}`:'none'}}><div style={{width:40,height:40,borderRadius:12,background:`${catColor}15`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>{icon}</div><div style={{flex:1,minWidth:0}}><div style={{fontWeight:600,color:C.dark,marginBottom:2}}>{tx.merchant}</div><div style={{fontSize:11,color:C.muted,display:'flex',gap:8,flexWrap:'wrap'}}><span>{tx.date}</span><span className="tag" style={{background:`${catColor}12`,color:catColor,padding:'2px 8px'}}>{tx.category}</span>{card&&<span>••{card.last}</span>}</div>{fi&&<div style={{fontSize:11,color:fi.color,fontWeight:500,marginTop:2}}>{fi.label}</div>}</div><div style={{textAlign:'right',flexShrink:0}}><div className="stat-number" style={{fontSize:16,fontWeight:700,color:C.dark}}>-${tx.amount.toFixed(2)}</div>{tx.note&&<div style={{fontSize:11,color:C.muted,marginTop:1}}>{tx.note}</div>}</div></div>})}</div>}
+    </div>
+
+    {showAdd&&<AddTxModal cards={cards} onClose={()=>setShowAdd(false)} onAdd={tx=>{handleAddTx(tx);setShowAdd(false);}}/>}
+    {showCSV&&<CSVImportModal cards={cards} onClose={()=>setShowCSV(false)} onImport={txs=>{handleImportCSV(txs);setShowCSV(false);}}/>}
+    {showScanner&&<ReceiptScannerModal cards={cards} onClose={()=>setShowScanner(false)} onAdd={tx=>{handleAddTx(tx);setShowScanner(false);}}/>}
+  </div>;
+};
+
+// ============================================================
+//  ADD / EDIT CARD MODAL
+// ============================================================
+const CardModal=({onClose,onSave,existing})=>{
+  const[sel,setSel]=useState(existing?.cardType||'');
+  const[f,setF]=useState({
+    last:existing?.last||'',name:existing?.name||'',
+    limit:existing?.limit||'',stmt:existing?.stmt||'',
+    apr:existing?.apr||'21.99',cd:existing?.cd||'',
+    dd:existing?.dd||'',opened:existing?.opened||'',
+    bal:existing?.bal||'',
+  });
+  const ok=sel&&f.limit&&f.cd&&f.dd;
+  const sub=e=>{
+    e.preventDefault();
+    if(!ok)return;
+    onSave({
+      id:existing?.id||Date.now()+'',
+      cardType:sel,last:f.last||'0000',name:f.name||'CARDHOLDER',
+      limit:+f.limit,bal:+f.bal||+f.stmt||0,stmt:+f.stmt||0,
+      apr:+f.apr||21.99,cd:+f.cd,dd:+f.dd,opened:f.opened||'2022-01-01'
+    });
+  };
+  return<div className="modal-overlay" onClick={onClose}>
+    <div className="modal-box" onClick={e=>e.stopPropagation()}>
+      <h2 style={{fontSize:22,fontWeight:800,marginBottom:20,color:C.dark}}>{existing?'Edit Card':'Add New Card'}</h2>
+      {sel&&<div style={{display:'flex',justifyContent:'center',marginBottom:20}}><CreditCard type={sel} last={f.last||'0000'} name={f.name||'YOUR NAME'} full/></div>}
+      <div style={{marginBottom:20}}>
+        <label style={{fontSize:12,fontWeight:600,color:C.dark,display:'block',marginBottom:10}}>Select Your Card</label>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,maxHeight:180,overflowY:'auto',padding:4}}>
+          {Object.entries(CARDS).map(([k,c])=><div key={k} onClick={()=>setSel(k)} style={{padding:8,borderRadius:10,cursor:'pointer',border:sel===k?`2px solid ${C.primary}`:`1px solid ${C.border}`,background:sel===k?C.primaryLight:'transparent',transition:'all .15s'}}>
+            <div style={{aspectRatio:'1.6',background:c.grad,borderRadius:4,marginBottom:6}}/>
+            <div style={{fontSize:8,textAlign:'center',lineHeight:1.2,fontWeight:500,color:C.text}}>{c.name.split(' ').slice(0,2).join(' ')}</div>
+          </div>)}
+        </div>
+      </div>
+      <form onSubmit={sub}>
+        <div className="grid-2" style={{marginBottom:20,gap:12}}>
+          {[
+            {l:'Last 4 Digits',k:'last',ph:'4532',max:4,type:'text'},
+            {l:'Name on Card',k:'name',ph:'JOHN DOE',type:'text'},
+            {l:'Credit Limit *',k:'limit',ph:'15000',type:'number'},
+            {l:'Current Balance',k:'bal',ph:'3240',type:'number'},
+            {l:'Statement Balance',k:'stmt',ph:'2890',type:'number'},
+            {l:'APR %',k:'apr',ph:'21.99',type:'number',step:'.01'},
+            {l:'Statement Close Day * (1-31)',k:'cd',ph:'12',type:'number',min:1,max:31},
+            {l:'Payment Due Day * (1-31)',k:'dd',ph:'7',type:'number',min:1,max:31},
+            {l:'Account Opened',k:'opened',ph:'',type:'date'},
+          ].map(fi=><div key={fi.k}>
+            <label style={{fontSize:11,color:C.muted,display:'block',marginBottom:4}}>{fi.l}</label>
+            <input type={fi.type} step={fi.step} min={fi.min} max={fi.max} maxLength={fi.max} className="inp" placeholder={fi.ph} value={f[fi.k]} onChange={e=>setF({...f,[fi.k]:fi.k==='name'?e.target.value.toUpperCase():fi.k==='last'?e.target.value.replace(/\D/g,''):e.target.value})}/>
+          </div>)}
+        </div>
+        <div style={{display:'flex',gap:12}}>
+          <button type="button" onClick={onClose} className="btn-ghost" style={{flex:1,padding:14}}>Cancel</button>
+          <button type="submit" disabled={!ok} className="btn-primary" style={{flex:2,opacity:ok?1:.5,cursor:ok?'pointer':'not-allowed'}}>{existing?'Save Changes':'Add Card'}</button>
+        </div>
+      </form>
+    </div>
+  </div>;
+};
+
+// ============================================================
+//  ACTION MODALS (Pay / New Purchase / Optimize)
+// ============================================================
+const ActionModal=({type,card,onClose})=>{
+  const d=CARDS[card.cardType];
+  const cy=calcCycle(card.cd,card.dd);
+  const[amt,setAmt]=useState('');
+  if(type==='pay')return<div className="modal-overlay" onClick={onClose}>
+    <div className="modal-box" style={{maxWidth:400}} onClick={e=>e.stopPropagation()}>
+      <h2 style={{fontSize:20,fontWeight:800,marginBottom:4,color:C.dark}}>💸 Pay Card</h2>
+      <p style={{fontSize:13,color:C.muted,marginBottom:20}}>{d.name} ••{card.last}</p>
+      <div style={{background:C.successLight,border:`1px solid ${C.success}`,borderRadius:12,padding:16,marginBottom:20}}>
+        <div style={{fontSize:12,color:C.success,fontWeight:600,marginBottom:4}}>Pay by {fmtD(cy.opt)} for maximum float</div>
+        <div style={{fontSize:28,fontWeight:800,color:C.dark}}>${fmt$(card.stmt)}</div>
+        <div style={{fontSize:12,color:C.muted}}>Statement balance • Due {fmtD(cy.due)}</div>
+      </div>
+      <div style={{marginBottom:20}}>
+        <label style={{fontSize:12,fontWeight:600,color:C.dark,display:'block',marginBottom:8}}>Custom Amount</label>
+        <div style={{position:'relative'}}><span style={{position:'absolute',left:14,top:'50%',transform:'translateY(-50%)',color:C.muted,fontWeight:600}}>$</span><input type="number" className="inp" value={amt} onChange={e=>setAmt(e.target.value)} placeholder={card.stmt} style={{paddingLeft:32}}/></div>
+      </div>
+      <div style={{display:'flex',gap:10}}>
+        <button onClick={onClose} className="btn-ghost" style={{flex:1}}>Cancel</button>
+        <button className="btn-primary" style={{flex:2}} onClick={onClose}>Confirm Payment</button>
+      </div>
+    </div>
+  </div>;
+  if(type==='purchase')return<div className="modal-overlay" onClick={onClose}>
+    <div className="modal-box" style={{maxWidth:400}} onClick={e=>e.stopPropagation()}>
+      <h2 style={{fontSize:20,fontWeight:800,marginBottom:4,color:C.dark}}>+ New Purchase</h2>
+      <p style={{fontSize:13,color:C.muted,marginBottom:20}}>{d.name} ••{card.last}</p>
+      <div style={{marginBottom:16}}>
+        <label style={{fontSize:12,fontWeight:600,color:C.dark,display:'block',marginBottom:8}}>Purchase Amount ($)</label>
+        <div style={{position:'relative'}}><span style={{position:'absolute',left:14,top:'50%',transform:'translateY(-50%)',color:C.muted,fontWeight:600}}>$</span><input type="number" className="inp" value={amt} onChange={e=>setAmt(e.target.value)} placeholder="0.00" style={{paddingLeft:32}}/></div>
+      </div>
+      {amt&&<div style={{background:cy.inBestWindow?C.successLight:C.warningLight,border:`1px solid ${cy.inBestWindow?C.success:C.warning}`,borderRadius:12,padding:14,marginBottom:16}}>
+        <div style={{fontWeight:600,color:cy.inBestWindow?C.success:C.warning,marginBottom:4}}>{cy.inBestWindow?'✅ Great timing!':'⏳ Consider waiting'}</div>
+        <div style={{fontSize:13,color:C.text}}>{cy.inBestWindow?`You'll get ${cy.fst} interest-free days on this purchase.`:`Best purchase window: ${fmtD(cy.bestBuyStart)} – ${fmtD(cy.bestBuyEnd)} for ${cy.maxFloat} days float.`}</div>
+      </div>}
+      <div style={{display:'flex',gap:10}}>
+        <button onClick={onClose} className="btn-ghost" style={{flex:1}}>Cancel</button>
+        <button className="btn-primary" style={{flex:2}} onClick={onClose}>Log Purchase</button>
+      </div>
+    </div>
+  </div>;
+  // Optimize modal
+  return<div className="modal-overlay" onClick={onClose}>
+    <div className="modal-box" style={{maxWidth:440}} onClick={e=>e.stopPropagation()}>
+      <h2 style={{fontSize:20,fontWeight:800,marginBottom:4,color:C.dark}}>🎯 Optimize Spending</h2>
+      <p style={{fontSize:13,color:C.muted,marginBottom:20}}>{d.name} ••{card.last}</p>
+      {[
+        {icon:'⭐',label:'Best Purchase Window',value:`${fmtD(cy.bestBuyStart)} – ${fmtD(cy.bestBuyEnd)}`,color:C.success,sub:'Max float days'},
+        {icon:'📅',label:'Statement Closes',value:fmtD(cy.nc),color:C.purple,sub:`In ${cy.uc} days`},
+        {icon:'💸',label:'Payment Due',value:fmtD(cy.due),color:C.danger,sub:`${cy.fst} days away`},
+        {icon:'🏆',label:'Max Float Available',value:`${cy.maxFloat} days`,color:C.primary,sub:'If you buy right after close'},
+      ].map((s,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:14,padding:'12px 0',borderBottom:`1px solid ${C.border}`}}>
+        <div style={{fontSize:24}}>{s.icon}</div>
+        <div style={{flex:1}}><div style={{fontWeight:600,color:C.dark}}>{s.label}</div><div style={{fontSize:12,color:C.muted}}>{s.sub}</div></div>
+        <div style={{fontWeight:700,color:s.color}}>{s.value}</div>
+      </div>)}
+      <button onClick={onClose} className="btn-primary" style={{width:'100%',marginTop:20}}>Got it!</button>
+    </div>
+  </div>;
+};
+
+// ============================================================
+//  SCORE BOOSTER - Statement Date Strategy & 1% Rule
+// ============================================================
+const ScoreBooster=({cards})=>{
+  const [selectedCard,setSelectedCard]=useState(null);
+  const [wizardStep,setWizardStep]=useState(0);
+  const [completedSteps,setCompletedSteps]=useState([]);
+  const [showStrategy,setShowStrategy]=useState('statement'); // 'statement' or 'onePercent'
+  
+  // Calculate 1% target for each card
+  const getOnePercentTarget=(limit)=>Math.ceil(limit*0.01);
+  
+  // Calculate pay-by date (3-4 days before statement close)
+  const getPayByDate=(card)=>{
+    const cy=calcCycle(card.cd,card.dd);
+    return addD(cy.nc,-4); // 4 days before statement close
+  };
+  
+  // Calculate utilization status
+  const getUtilStatus=(cards)=>{
+    const totalLimit=cards.reduce((s,c)=>s+c.limit,0);
+    const totalBal=cards.reduce((s,c)=>s+c.bal,0);
+    const util=totalLimit?(totalBal/totalLimit)*100:0;
+    return{util,totalLimit,totalBal,status:util<10?'excellent':util<30?'good':'high'};
+  };
+  
+  const utilStatus=getUtilStatus(cards);
+  
+  // Wizard steps
+  const WIZARD_STEPS=[
+    {id:1,title:'Find Statement Dates',desc:'Locate your statement closing date (NOT due date) in your bank app or PDF statement.',icon:'📅',action:'I found my dates'},
+    {id:2,title:'Set Payment Reminder',desc:'Set a reminder 3-4 days BEFORE your statement closing date.',icon:'⏰',action:'Reminder set'},
+    {id:3,title:'Choose Your 1% Card',desc:'Pick ONE card to leave ~1% balance on. Pay all others to $0.',icon:'💳',action:'Card selected'},
+    {id:4,title:'Make Strategic Payment',desc:'Pay cards down so only ~1% remains on your chosen card.',icon:'💸',action:'Payment made'},
+    {id:5,title:'Set Up Autopay',desc:'Enable autopay to pay the final small balance by due date.',icon:'🔄',action:'Autopay enabled'},
+  ];
+  
+  const toggleStep=(stepId)=>{
+    setCompletedSteps(prev=>prev.includes(stepId)?prev.filter(s=>s!==stepId):[...prev,stepId]);
+  };
+  
+  const progressPct=(completedSteps.length/WIZARD_STEPS.length)*100;
+  
+  // Impact calculator
+  const potentialScoreIncrease=utilStatus.util>30?Math.round((utilStatus.util-10)*0.8):utilStatus.util>10?Math.round((utilStatus.util-5)*0.5):0;
+  
+  return<div className="fade-in">
+    <PageHead t="🚀 Score Booster" s="Master the strategies that 800+ credit score holders use"/>
+    
+    {/* Score Impact Banner */}
+    <div style={{background:'linear-gradient(135deg,#10b981 0%,#059669 100%)',borderRadius:20,padding:28,color:'#fff',marginBottom:28,position:'relative',overflow:'hidden',boxShadow:'0 20px 60px rgba(16,185,129,.3)'}}>
+      <div style={{position:'absolute',right:-30,top:-30,width:150,height:150,background:'radial-gradient(circle,rgba(255,255,255,.15),transparent 70%)',borderRadius:'50%'}}/>
+      <div style={{position:'relative',zIndex:1,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:20}}>
+        <div>
+          <div style={{fontSize:13,opacity:.9,marginBottom:6,fontWeight:500}}>💡 Score Impact Potential</div>
+          <div style={{fontSize:36,fontWeight:800,marginBottom:4}}>+{potentialScoreIncrease || '15-30'} points</div>
+          <div style={{fontSize:14,opacity:.9}}>Utilization = 30% of your FICO score</div>
+        </div>
+        <div style={{background:'rgba(255,255,255,.15)',backdropFilter:'blur(10px)',borderRadius:16,padding:20,textAlign:'center'}}>
+          <div style={{fontSize:12,opacity:.8,marginBottom:4}}>Current Utilization</div>
+          <div className="stat-number" style={{fontSize:32,fontWeight:800,color:utilStatus.status==='excellent'?'#fff':utilStatus.status==='good'?'#fef3c7':'#fee2e2'}}>{utilStatus.util.toFixed(1)}%</div>
+          <div style={{fontSize:11,marginTop:4,opacity:.9}}>{utilStatus.status==='excellent'?'🌟 Excellent!':utilStatus.status==='good'?'👍 Good':' Needs improvement'}</div>
+        </div>
+      </div>
+    </div>
+    
+    {/* Strategy Toggle Cards */}
+    <div className="grid-2" style={{marginBottom:28,gap:20}}>
+      <div onClick={()=>setShowStrategy('statement')} className="section-card card-hover" style={{margin:0,cursor:'pointer',border:showStrategy==='statement'?`2px solid ${C.primary}`:`1px solid var(--border)`,background:showStrategy==='statement'?C.primaryLight:'var(--surface)'}}>
+        <div style={{display:'flex',alignItems:'flex-start',gap:16}}>
+          <div style={{width:56,height:56,background:'linear-gradient(135deg,#3b82f6,#1d4ed8)',borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',fontSize:26}}>📅</div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:16,fontWeight:700,color:C.dark,marginBottom:6}}>Statement Date Strategy</div>
+            <div style={{fontSize:13,color:C.muted,lineHeight:1.5}}>Pay down balance 3-4 days BEFORE statement close date to report low utilization.</div>
+            {showStrategy==='statement'&&<div style={{marginTop:12,padding:10,background:'var(--surface)',borderRadius:10,border:`1px solid ${C.border}`}}>
+              <div style={{fontSize:11,color:C.primary,fontWeight:600}}>💡 KEY INSIGHT</div>
+              <div style={{fontSize:12,color:C.text,marginTop:4}}>Credit bureaus only see your balance on the statement closing date — NOT your due date!</div>
+            </div>}
+          </div>
+        </div>
+      </div>
+      
+      <div onClick={()=>setShowStrategy('onePercent')} className="section-card card-hover" style={{margin:0,cursor:'pointer',border:showStrategy==='onePercent'?`2px solid ${C.primary}`:`1px solid var(--border)`,background:showStrategy==='onePercent'?C.primaryLight:'var(--surface)'}}>
+        <div style={{display:'flex',alignItems:'flex-start',gap:16}}>
+          <div style={{width:56,height:56,background:'linear-gradient(135deg,#8b5cf6,#6d28d9)',borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',fontSize:26}}>🎯</div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:16,fontWeight:700,color:C.dark,marginBottom:6}}>The 1% Rule</div>
+            <div style={{fontSize:13,color:C.muted,lineHeight:1.5}}>Keep ONE card at ~1% utilization, pay all others to $0. Used by 800+ score holders.</div>
+            {showStrategy==='onePercent'&&<div style={{marginTop:12,padding:10,background:'var(--surface)',borderRadius:10,border:`1px solid ${C.border}`}}>
+              <div style={{fontSize:11,color:C.purple,fontWeight:600}}>💡 KEY INSIGHT</div>
+              <div style={{fontSize:12,color:C.text,marginTop:4}}>Leaving 1% proves you're using credit actively while keeping utilization extremely low.</div>
+            </div>}
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    {/* Monthly Wizard - Step by Step */}
+    <div className="section-card" style={{marginBottom:28}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+        <div>
+          <h2 style={{fontSize:18,fontWeight:700,color:C.dark}}>📋 Monthly Optimization Wizard</h2>
+          <p style={{fontSize:13,color:C.muted,marginTop:4}}>Complete these 5 steps each month to maximize your score</p>
+        </div>
+        <div style={{textAlign:'right'}}>
+          <div className="stat-number" style={{fontSize:24,fontWeight:800,color:progressPct===100?C.success:C.primary}}>{completedSteps.length}/{WIZARD_STEPS.length}</div>
+          <div style={{fontSize:11,color:C.muted}}>Steps Done</div>
+        </div>
+      </div>
+      
+      {/* Progress Bar */}
+      <div style={{background:'var(--border)',borderRadius:10,height:8,marginBottom:24,overflow:'hidden'}}>
+        <div style={{width:`${progressPct}%`,height:'100%',background:progressPct===100?'linear-gradient(90deg,#10b981,#34d399)':'linear-gradient(90deg,#F48120,#FAAE40)',borderRadius:10,transition:'width .5s ease'}}/>
+      </div>
+      
+      {/* Steps */}
+      <div style={{display:'flex',flexDirection:'column',gap:12}}>
+        {WIZARD_STEPS.map((step,idx)=>{
+          const isComplete=completedSteps.includes(step.id);
+          const isCurrent=!isComplete&&completedSteps.length===idx;
+          return<div key={step.id} onClick={()=>toggleStep(step.id)} style={{display:'flex',alignItems:'center',gap:16,padding:16,background:isComplete?'rgba(16,185,129,.08)':isCurrent?C.primaryLight:'var(--glass)',border:`1px solid ${isComplete?'rgba(16,185,129,.3)':isCurrent?'rgba(244,129,32,.3)':'var(--border)'}`,borderRadius:14,cursor:'pointer',transition:'all .2s'}}>
+            <div style={{width:44,height:44,borderRadius:12,background:isComplete?'linear-gradient(135deg,#10b981,#059669)':isCurrent?'linear-gradient(135deg,#F48120,#FAAE40)':'var(--surface)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:isComplete?20:22,color:isComplete||isCurrent?'#fff':C.muted,fontWeight:700,boxShadow:isComplete||isCurrent?'0 4px 12px rgba(0,0,0,.15)':'none'}}>
+              {isComplete?'✓':step.icon}
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:15,fontWeight:600,color:isComplete?C.success:C.dark,marginBottom:2}}>Step {step.id}: {step.title}</div>
+              <div style={{fontSize:12,color:C.muted,lineHeight:1.4}}>{step.desc}</div>
+            </div>
+            <div style={{fontSize:12,fontWeight:600,color:isComplete?C.success:isCurrent?C.primary:C.muted,padding:'6px 12px',background:isComplete?'rgba(16,185,129,.1)':isCurrent?'rgba(244,129,32,.1)':'var(--surface)',borderRadius:20}}>
+              {isComplete?'Done ✓':isCurrent?'Do Now':step.action}
+            </div>
+          </div>
+        })}
+      </div>
+    </div>
+    
+    {/* My Cards - Payment Scheduler & 1% Calculator */}
+    <div className="section-card" style={{marginBottom:28}}>
+      <SecHead t="💳 Smart Payment Scheduler"/>
+      <p style={{fontSize:13,color:C.muted,marginBottom:20,marginTop:-8}}>See exactly when to pay each card and how much to leave</p>
+      
+      <div style={{display:'flex',flexDirection:'column',gap:16}}>
+        {cards.map(card=>{
+          const cy=calcCycle(card.cd,card.dd);
+          const payByDate=getPayByDate(card);
+          const daysUntilPayBy=daysB(TODAY,payByDate);
+          const onePercentTarget=getOnePercentTarget(card.limit);
+          const isSelected=selectedCard===card.id;
+          const payDownAmount=Math.max(0,card.bal-onePercentTarget);
+          const cardDef=CARDS[card.cardType]||CARDS.chase_sapphire_preferred;
+          const isUrgent=daysUntilPayBy<=3&&daysUntilPayBy>=0;
+          const isPast=daysUntilPayBy<0;
+          
+          return<div key={card.id} style={{background:'var(--glass)',border:`1px solid ${isUrgent?'rgba(239,68,68,.4)':isSelected?'rgba(244,129,32,.4)':'var(--border)'}`,borderRadius:16,overflow:'hidden'}}>
+            {/* Card Header */}
+            <div onClick={()=>setSelectedCard(isSelected?null:card.id)} style={{padding:16,display:'flex',alignItems:'center',gap:16,cursor:'pointer',background:isUrgent?'rgba(239,68,68,.05)':isSelected?C.primaryLight:'transparent'}}>
+              <MiniCard type={card.cardType} last={card.last}/>
+              <div style={{flex:1}}>
+                <div style={{fontSize:14,fontWeight:600,color:C.dark}}>{cardDef.name}</div>
+                <div style={{fontSize:12,color:C.muted}}>••••{card.last} • Limit ${card.limit.toLocaleString()}</div>
+              </div>
+              <div style={{textAlign:'right'}}>
+                <div style={{fontSize:11,color:isUrgent?C.danger:daysUntilPayBy<=7?C.warning:C.muted,fontWeight:600}}>
+                  {isPast?'Statement closed':`Pay by ${fmtD(payByDate)}`}
+                </div>
+                <div style={{fontSize:18,fontWeight:700,color:isUrgent?C.danger:daysUntilPayBy<=7?C.warning:C.success}}>
+                  {isPast?'—':`${daysUntilPayBy} days`}
+                </div>
+              </div>
+              <div style={{fontSize:20,color:C.muted,transform:isSelected?'rotate(180deg)':'rotate(0)',transition:'transform .2s'}}>▾</div>
+            </div>
+            
+            {/* Expanded Details */}
+            {isSelected&&<div style={{borderTop:`1px solid ${C.border}`,padding:20,background:'var(--surface)'}}>
+              <div className="grid-2" style={{gap:16,marginBottom:20}}>
+                {/* Statement Date Info */}
+                <div style={{background:'linear-gradient(135deg,rgba(59,130,246,.1),rgba(59,130,246,.05))',border:'1px solid rgba(59,130,246,.2)',borderRadius:14,padding:16}}>
+                  <div style={{fontSize:11,color:C.info,fontWeight:600,marginBottom:8}}>📅 STATEMENT CLOSES</div>
+                  <div className="stat-number" style={{fontSize:24,fontWeight:800,color:C.dark}}>{fmtD(cy.nc)}</div>
+                  <div style={{fontSize:12,color:C.muted,marginTop:4}}>In {cy.uc} days • Day {card.cd} of month</div>
+                  <div style={{marginTop:12,padding:10,background:'rgba(59,130,246,.1)',borderRadius:8}}>
+                    <div style={{fontSize:11,fontWeight:600,color:C.info}}>⏰ Pay 3-4 days before:</div>
+                    <div style={{fontSize:14,fontWeight:700,color:C.dark,marginTop:2}}>{fmtD(payByDate)}</div>
+                  </div>
+                </div>
+                
+                {/* 1% Rule Calculator */}
+                <div style={{background:'linear-gradient(135deg,rgba(139,92,246,.1),rgba(139,92,246,.05))',border:'1px solid rgba(139,92,246,.2)',borderRadius:14,padding:16}}>
+                  <div style={{fontSize:11,color:C.purple,fontWeight:600,marginBottom:8}}>🎯 1% RULE TARGET</div>
+                  <div className="stat-number" style={{fontSize:24,fontWeight:800,color:C.dark}}>${onePercentTarget}</div>
+                  <div style={{fontSize:12,color:C.muted,marginTop:4}}>Leave this on card (1% of ${card.limit.toLocaleString()})</div>
+                  <div style={{marginTop:12,padding:10,background:'rgba(139,92,246,.1)',borderRadius:8}}>
+                    <div style={{fontSize:11,fontWeight:600,color:C.purple}}>💸 Pay down amount:</div>
+                    <div style={{fontSize:14,fontWeight:700,color:card.bal>onePercentTarget?C.warning:C.success,marginTop:2}}>
+                      {card.bal>onePercentTarget?`$${payDownAmount.toLocaleString()} to reach 1%`:'Already at/below 1% ✓'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Current Status */}
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:14,background:'var(--glass)',borderRadius:12,border:`1px solid ${C.border}`}}>
+                <div>
+                  <div style={{fontSize:12,color:C.muted}}>Current Balance</div>
+                  <div className="stat-number" style={{fontSize:20,fontWeight:700,color:C.dark}}>${card.bal.toLocaleString()}</div>
+                </div>
+                <div style={{fontSize:24}}>→</div>
+                <div>
+                  <div style={{fontSize:12,color:C.muted}}>Target Balance</div>
+                  <div className="stat-number" style={{fontSize:20,fontWeight:700,color:C.success}}>${onePercentTarget}</div>
+                </div>
+                <div style={{fontSize:24}}>→</div>
+                <div>
+                  <div style={{fontSize:12,color:C.muted}}>Utilization</div>
+                  <div className="stat-number" style={{fontSize:20,fontWeight:700,color:C.success}}>1%</div>
+                </div>
+              </div>
+              
+              {/* Action Buttons */}
+              <div style={{display:'flex',gap:10,marginTop:16}}>
+                <button className="btn-ghost" style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:6}} onClick={()=>{
+                  // In a real app, this would integrate with calendar
+                  alert(`Reminder set for ${fmtFull(payByDate)}!\n\nPay ${cardDef.name} down to $${onePercentTarget} before statement closes.`);
+                }}>
+                  <span>📅</span> Add to Calendar
+                </button>
+                <button className="btn-primary" style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+                  <span>💸</span> Pay ${payDownAmount>0?payDownAmount.toLocaleString():'0'} Now
+                </button>
+              </div>
+            </div>}
+          </div>
+        })}
+      </div>
+    </div>
+    
+    {/* Overall Utilization Tracker */}
+    <div className="section-card" style={{marginBottom:28}}>
+      <SecHead t="📊 Utilization Tracker"/>
+      <div className="grid-3" style={{gap:16}}>
+        <div style={{background:utilStatus.util<10?'linear-gradient(135deg,rgba(16,185,129,.15),rgba(16,185,129,.05))':utilStatus.util<30?'linear-gradient(135deg,rgba(245,158,11,.15),rgba(245,158,11,.05))':'linear-gradient(135deg,rgba(239,68,68,.15),rgba(239,68,68,.05))',border:`1px solid ${utilStatus.util<10?'rgba(16,185,129,.3)':utilStatus.util<30?'rgba(245,158,11,.3)':'rgba(239,68,68,.3)'}`,borderRadius:16,padding:20,textAlign:'center'}}>
+          <div style={{fontSize:12,color:C.muted,marginBottom:6}}>Current Utilization</div>
+          <div className="stat-number" style={{fontSize:36,fontWeight:800,color:utilStatus.util<10?C.success:utilStatus.util<30?C.warning:C.danger}}>{utilStatus.util.toFixed(1)}%</div>
+          <div style={{fontSize:12,marginTop:6,color:utilStatus.util<10?C.success:utilStatus.util<30?C.warning:C.danger,fontWeight:600}}>
+            {utilStatus.util<10?'🌟 Excellent':utilStatus.util<30?'👍 Good':'⚠️ Too High'}
+          </div>
+        </div>
+        
+        <div style={{background:'var(--glass)',border:`1px solid ${C.border}`,borderRadius:16,padding:20,textAlign:'center'}}>
+          <div style={{fontSize:12,color:C.muted,marginBottom:6}}>Total Balance</div>
+          <div className="stat-number" style={{fontSize:28,fontWeight:800,color:C.dark}}>${utilStatus.totalBal.toLocaleString()}</div>
+          <div style={{fontSize:12,color:C.muted,marginTop:6}}>across {cards.length} cards</div>
+        </div>
+        
+        <div style={{background:'var(--glass)',border:`1px solid ${C.border}`,borderRadius:16,padding:20,textAlign:'center'}}>
+          <div style={{fontSize:12,color:C.muted,marginBottom:6}}>Total Credit Limit</div>
+          <div className="stat-number" style={{fontSize:28,fontWeight:800,color:C.dark}}>${utilStatus.totalLimit.toLocaleString()}</div>
+          <div style={{fontSize:11,color:C.primary,marginTop:6,fontWeight:500}}>Request limit increases!</div>
+        </div>
+      </div>
+      
+      {/* Visual utilization bar */}
+      <div style={{marginTop:20}}>
+        <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}>
+          <span style={{fontSize:12,color:C.muted}}>Utilization Range</span>
+          <span style={{fontSize:12,color:C.muted}}>Goal: Under 10%</span>
+        </div>
+        <div style={{height:24,background:'var(--border)',borderRadius:12,position:'relative',overflow:'hidden'}}>
+          {/* Zone markers */}
+          <div style={{position:'absolute',left:'10%',top:0,bottom:0,width:1,background:'rgba(16,185,129,.5)'}}/>
+          <div style={{position:'absolute',left:'30%',top:0,bottom:0,width:1,background:'rgba(245,158,11,.5)'}}/>
+          {/* Current position */}
+          <div style={{position:'absolute',left:`${Math.min(utilStatus.util,100)}%`,top:'50%',transform:'translate(-50%,-50%)',width:20,height:20,background:utilStatus.util<10?C.success:utilStatus.util<30?C.warning:C.danger,borderRadius:'50%',border:'3px solid #fff',boxShadow:'0 2px 8px rgba(0,0,0,.2)',zIndex:10}}/>
+          {/* Labels */}
+          <div style={{position:'absolute',left:'5%',top:'50%',transform:'translateY(-50%)',fontSize:10,fontWeight:600,color:C.success}}>0-10%</div>
+          <div style={{position:'absolute',left:'20%',top:'50%',transform:'translateY(-50%)',fontSize:10,fontWeight:600,color:C.warning}}>10-30%</div>
+          <div style={{position:'absolute',left:'60%',top:'50%',transform:'translateY(-50%)',fontSize:10,fontWeight:600,color:C.danger}}>30%+</div>
+        </div>
+      </div>
+    </div>
+    
+    {/* Educational Tooltips */}
+    <div className="grid-2" style={{gap:20}}>
+      <div className="section-card" style={{margin:0,background:'linear-gradient(135deg,rgba(59,130,246,.05),rgba(59,130,246,.02))'}}>
+        <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:16}}>
+          <div style={{width:40,height:40,background:'linear-gradient(135deg,#3b82f6,#1d4ed8)',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>📅</div>
+          <div style={{fontSize:16,fontWeight:700,color:C.dark}}>Statement Date Strategy</div>
+        </div>
+        <div style={{fontSize:13,color:C.text,lineHeight:1.6,marginBottom:12}}>
+          Credit bureaus take a "snapshot" of your balance on the <strong>statement closing date</strong>, not the due date. This reported balance determines your utilization ratio.
+        </div>
+        <div style={{background:'rgba(59,130,246,.1)',padding:12,borderRadius:10,fontSize:12,color:C.info}}>
+          <strong>Pro Tip:</strong> Pay 3-4 days early to ensure payment posts before the snapshot. Processing can take 1-2 business days!
+        </div>
+      </div>
+      
+      <div className="section-card" style={{margin:0,background:'linear-gradient(135deg,rgba(139,92,246,.05),rgba(139,92,246,.02))'}}>
+        <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:16}}>
+          <div style={{width:40,height:40,background:'linear-gradient(135deg,#8b5cf6,#6d28d9)',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>🎯</div>
+          <div style={{fontSize:16,fontWeight:700,color:C.dark}}>The 1% Rule</div>
+        </div>
+        <div style={{fontSize:13,color:C.text,lineHeight:1.6,marginBottom:12}}>
+          People with 800+ scores often leave exactly <strong>1% balance on ONE card</strong> and pay all others to $0. This shows active credit use while keeping utilization minimal.
+        </div>
+        <div style={{background:'rgba(139,92,246,.1)',padding:12,borderRadius:10,fontSize:12,color:C.purple}}>
+          <strong>Pro Tip:</strong> Pay the remaining 1% by the actual due date so you never pay interest!
+        </div>
+      </div>
+    </div>
+    
+    {/* Bonus Tips */}
+    <div className="section-card" style={{marginTop:28,background:'linear-gradient(135deg,rgba(244,129,32,.05),rgba(244,129,32,.02))'}}>
+      <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20}}>
+        <div style={{fontSize:28}}>🏆</div>
+        <div>
+          <div style={{fontSize:16,fontWeight:700,color:C.dark}}>Bonus: Request Credit Limit Increases</div>
+          <div style={{fontSize:13,color:C.muted}}>The easiest way to lower utilization without changing spending</div>
+        </div>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:12}}>
+        {[
+          {icon:'📞',tip:'Call every 6 months to request increases'},
+          {icon:'💳',tip:'Most issuers offer online CLI requests'},
+          {icon:'📈',tip:'Higher limits = lower utilization ratio'},
+          {icon:'🎯',tip:'Soft pull requests won\'t hurt your score'},
+        ].map((t,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:10,padding:12,background:'rgba(244,129,32,.08)',borderRadius:10}}>
+          <span style={{fontSize:20}}>{t.icon}</span>
+          <span style={{fontSize:12,color:C.text}}>{t.tip}</span>
+        </div>)}
+      </div>
+    </div>
+  </div>;
+};
+
+// ============================================================
+//  MAIN APP
+// ============================================================
+function App(){
+  const[cards,setCards]=useState(DEMO);
+  const[tab,setTab]=useState('dashboard');
+  const[showAdd,setShowAdd]=useState(false);
+  const[editCard,setEditCard]=useState(null);
+  const[action,setAction]=useState(null); // {type, card}
+  const[fico]=useState(742);
+  const[darkMode,setDarkMode]=useState(false);
+
+  useEffect(()=>{
+    document.body.className=darkMode?'dark':'';
+  },[darkMode]);
+
+  const handleSave=useCallback(c=>{
+    setCards(prev=>prev.some(p=>p.id===c.id)?prev.map(p=>p.id===c.id?c:p):[...prev,c]);
+    setShowAdd(false);setEditCard(null);
+  },[]);
+
+  const handleAction=useCallback((type,card)=>{
+    setAction({type,card});
+  },[]);
+
+  return<div style={{display:'flex',minHeight:'100vh'}}>
+    <Sidebar tab={tab} setTab={setTab} onAdd={()=>setShowAdd(true)} darkMode={darkMode} setDarkMode={setDarkMode}/>
+    <main className="main-content" style={{flex:1,marginLeft:260,padding:'36px 40px',minHeight:'100vh',paddingBottom:100,maxWidth:1200}}>
+      {tab==='dashboard'&&<Dashboard cards={cards} setTab={setTab} fico={fico} onAdd={()=>setShowAdd(true)}/>}
+      {tab==='float'&&<FloatPage cards={cards} onAction={handleAction}/>}
+      {tab==='cards'&&<CardVault cards={cards} onAdd={()=>setShowAdd(true)} onEdit={c=>{setEditCard(c);}}/>}
+      {tab==='scorebooster'&&<ScoreBooster cards={cards}/>}
+      {tab==='optimizer'&&<SpendOptimizer cards={cards}/>}
+      {tab==='interest'&&<InterestPage cards={cards}/>}
+      {tab==='fico'&&<FicoPage cards={cards} fico={fico}/>}
+      {tab==='rule72'&&<Rule72Page/>}
+      {tab==='floatstrategy'&&<FloatStrategyPage cards={cards}/>}
+      {tab==='planner'&&<SpendingPlanner cards={cards} setTab={setTab}/>}
+      {tab==='timeline'&&<Timeline cards={cards}/>}
+      {tab==='settings'&&<Settings darkMode={darkMode} setDarkMode={setDarkMode}/>}
+    </main>
+    <BottomNav tab={tab} setTab={setTab}/>
+    {(showAdd||editCard)&&<CardModal onClose={()=>{setShowAdd(false);setEditCard(null);}} onSave={handleSave} existing={editCard}/>}
+    {action&&<ActionModal type={action.type} card={action.card} onClose={()=>setAction(null)}/>}
+  </div>;
+}
+
+ReactDOM.render(<App/>,document.getElementById('root'));
+</script>
+</body>
+</html>
